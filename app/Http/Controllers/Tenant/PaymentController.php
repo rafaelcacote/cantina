@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use App\Models\ParentGuardian;
 use App\Models\Payment;
 use App\Models\Student;
+use App\Models\TabEntry;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +27,7 @@ class PaymentController extends Controller
         $to = $request->string('to')->toString();
 
         $payments = Payment::query()
-            ->with(['student', 'parent', 'creator'])
+            ->with(['student', 'parent', 'order', 'tabEntry', 'creator'])
             ->where('tenant_id', $tenantId)
             ->when($studentId, fn ($query) => $query->where('student_id', $studentId))
             ->when($parentId, fn ($query) => $query->where('parent_id', $parentId))
@@ -73,6 +75,18 @@ class PaymentController extends Controller
                 ->where('tenant_id', $tenantId)
                 ->orderBy('name')
                 ->get(['id', 'name']),
+            'orders' => Order::query()
+                ->where('tenant_id', $tenantId)
+                ->orderByDesc('id')
+                ->limit(100)
+                ->get(['id', 'student_id', 'final_amount', 'status']),
+            'tabEntries' => TabEntry::query()
+                ->with('student')
+                ->where('tenant_id', $tenantId)
+                ->where('status', 'open')
+                ->orderByDesc('id')
+                ->limit(100)
+                ->get(['id', 'student_id', 'amount', 'status', 'entry_date']),
             'users' => User::query()
                 ->where('tenant_id', $tenantId)
                 ->orderBy('name')
@@ -101,7 +115,7 @@ class PaymentController extends Controller
     public function show(Request $request, Payment $payment): View
     {
         $this->ensurePaymentBelongsToTenant($request, $payment);
-        $payment->load(['student', 'parent', 'creator']);
+        $payment->load(['student', 'parent', 'order', 'tabEntry', 'creator']);
 
         return view('pages.tenant.payments.show', [
             'title' => 'Detalhes do Pagamento',
@@ -135,6 +149,16 @@ class PaymentController extends Controller
             ->with('success', 'Status do pagamento atualizado com sucesso.');
     }
 
+    public function destroy(Request $request, Payment $payment): RedirectResponse
+    {
+        $this->ensurePaymentBelongsToTenant($request, $payment);
+        $payment->delete();
+
+        return redirect()
+            ->route('tenant.payments.index')
+            ->with('success', 'Pagamento excluído com sucesso.');
+    }
+
     private function validatePayment(Request $request, int $tenantId): array
     {
         return $request->validate([
@@ -147,6 +171,16 @@ class PaymentController extends Controller
                 'nullable',
                 'integer',
                 Rule::exists('parents', 'id')->where(fn ($query) => $query->where('tenant_id', $tenantId)),
+            ],
+            'order_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('orders', 'id')->where(fn ($query) => $query->where('tenant_id', $tenantId)),
+            ],
+            'tab_entry_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('tab_entries', 'id')->where(fn ($query) => $query->where('tenant_id', $tenantId)),
             ],
             'amount' => ['required', 'numeric', 'min:0'],
             'payment_method' => ['required', Rule::in(array_keys($this->methods()))],

@@ -76,6 +76,23 @@ class ParentController extends Controller
         ]);
     }
 
+    public function students(Request $request, ParentGuardian $parent): View
+    {
+        $this->ensureParentBelongsToTenant($request, $parent);
+
+        $links = $parent->studentParents()
+            ->with(['student.school'])
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('pages.tenant.parents.students', [
+            'title' => 'Alunos do Responsável',
+            'parent' => $parent,
+            'links' => $links,
+        ]);
+    }
+
     public function edit(Request $request, ParentGuardian $parent): View
     {
         $this->ensureParentBelongsToTenant($request, $parent);
@@ -102,6 +119,23 @@ class ParentController extends Controller
         return redirect()
             ->route('tenant.parents.show', $parent)
             ->with('success', 'Responsável atualizado com sucesso.');
+    }
+
+    public function destroy(Request $request, ParentGuardian $parent): RedirectResponse
+    {
+        $this->ensureParentBelongsToTenant($request, $parent);
+
+        if ($parent->studentParents()->exists()) {
+            return back()->withErrors([
+                'delete' => 'Não é possível excluir o responsável enquanto houver vínculos com alunos.',
+            ]);
+        }
+
+        $parent->delete();
+
+        return redirect()
+            ->route('tenant.parents.index')
+            ->with('success', 'Responsável excluído com sucesso.');
     }
 
     private function validateParent(Request $request, int $tenantId): array

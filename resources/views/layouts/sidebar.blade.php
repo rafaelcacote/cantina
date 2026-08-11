@@ -58,21 +58,53 @@
     }"
     @mouseenter="if (!$store.sidebar.isExpanded) $store.sidebar.setHovered(true)"
     @mouseleave="$store.sidebar.setHovered(false)">
-    <!-- Logo Section -->
+    <!-- Brand Section -->
     <div class="pt-8 pb-7 flex"
         :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ?
         'xl:justify-center' :
         'justify-start'">
-        <a href="/">
-            <img x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen"
-                class="dark:hidden" src="/images/logo/logo.svg" alt="Logo" width="150" height="40" />
-            <img x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen"
-                class="hidden dark:block" src="/images/logo/logo-dark.svg" alt="Logo" width="150"
-                height="40" />
-            <img x-show="!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen"
-                src="/images/logo/logo-icon.svg" alt="Logo" width="32" height="32" />
+        @if (! empty($brandHasTenant))
+            <a href="/"
+               class="group flex min-w-0 items-center gap-3 rounded-2xl outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-brand-500/30"
+               :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : 'w-full'">
+                <span class="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-[1.25rem] border border-gray-200/80 bg-gradient-to-br from-gray-50 to-white p-0.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] dark:border-gray-700 dark:from-gray-800 dark:to-gray-900">
+                    @if (! empty($brandLogoSrc))
+                        <img src="{{ $brandLogoSrc }}"
+                             alt=""
+                             class="size-full object-contain"
+                             aria-hidden="true">
+                    @else
+                        <span class="font-outfit text-2xl font-semibold tracking-tight text-brand-600 dark:text-brand-400">
+                            {{ mb_strtoupper(mb_substr($brandName, 0, 1)) }}
+                        </span>
+                    @endif
+                </span>
 
-        </a>
+                <span
+                    x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen"
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 translate-x-1"
+                    x-transition:enter-end="opacity-100 translate-x-0"
+                    class="min-w-0 flex-1">
+                    <span class="block truncate font-outfit text-[15px] font-semibold leading-5 tracking-tight text-gray-900 dark:text-white/90">
+                        {{ $brandName }}
+                    </span>
+                    <span class="mt-0.5 block truncate text-[11px] font-medium uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
+                        Cantina
+                    </span>
+                </span>
+            </a>
+        @else
+            <a href="/">
+                <img x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen"
+                    class="dark:hidden" src="/images/logo/logo.svg" alt="{{ $brandName ?? 'Logo' }}" width="150" height="40" />
+                <img x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen"
+                    class="hidden dark:block" src="/images/logo/logo-dark.svg" alt="{{ $brandName ?? 'Logo' }}" width="150"
+                    height="40" />
+                <img x-show="!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen"
+                    src="/images/logo/logo-icon.svg" alt="{{ $brandName ?? 'Logo' }}" width="32" height="32" />
+            </a>
+        @endif
     </div>
 
     <!-- Navigation Menu -->

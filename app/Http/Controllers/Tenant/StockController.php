@@ -103,11 +103,41 @@ class StockController extends Controller
             'reserved_quantity' => ['required', 'integer', 'min:0'],
         ]);
 
-        $stock->update($validated);
+        $previousQuantity = (int) $stock->quantity;
+        $newQuantity = (int) $validated['quantity'];
+
+        DB::transaction(function () use ($stock, $request, $validated, $previousQuantity, $newQuantity) {
+            $stock->update($validated);
+
+            if ($previousQuantity !== $newQuantity) {
+                StockMovement::query()->create([
+                    'tenant_id' => $stock->tenant_id,
+                    'product_id' => $stock->product_id,
+                    'movement_type' => 'adjustment',
+                    'quantity' => $newQuantity,
+                    'previous_quantity' => $previousQuantity,
+                    'new_quantity' => $newQuantity,
+                    'description' => 'Edição direta do estoque',
+                    'created_by' => $request->user()->id,
+                    'reference_type' => 'direct_edit',
+                    'reference_id' => $stock->id,
+                ]);
+            }
+        });
 
         return redirect()
             ->route('tenant.stocks.show', $stock)
             ->with('success', 'Estoque atualizado com sucesso.');
+    }
+
+    public function destroy(Request $request, Stock $stock): RedirectResponse
+    {
+        $this->ensureStockBelongsToTenant($request, $stock);
+        $stock->delete();
+
+        return redirect()
+            ->route('tenant.stocks.index')
+            ->with('success', 'Estoque excluído com sucesso.');
     }
 
     public function adjust(Request $request, Stock $stock): RedirectResponse

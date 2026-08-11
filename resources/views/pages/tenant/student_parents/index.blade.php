@@ -54,6 +54,11 @@
                                 <div class="inline-flex items-center gap-2">
                                     <a href="{{ route('tenant.student-parents.show', $link) }}" class="rounded-md px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-white/5">Visualizar</a>
                                     <a href="{{ route('tenant.student-parents.edit', $link) }}" class="rounded-md px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5">Editar</a>
+                                    <form method="POST" action="{{ route('tenant.student-parents.destroy', $link) }}" onsubmit="return confirm('Excluir este registro?')" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="rounded-md px-3 py-1.5 text-xs font-medium text-error-600 hover:bg-error-50 dark:text-error-400 dark:hover:bg-error-500/10">Excluir</button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

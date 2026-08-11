@@ -54,7 +54,6 @@ class StudentWalletController extends Controller
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateWallet($request, $tenantId);
         $validated['tenant_id'] = $tenantId;
-        $validated['allow_negative_balance'] = $request->boolean('allow_negative_balance');
 
         $wallet = StudentWallet::query()->create($validated);
 
@@ -100,12 +99,21 @@ class StudentWalletController extends Controller
         $this->ensureWalletBelongsToTenant($request, $studentWallet);
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateWallet($request, $tenantId, $studentWallet);
-        $validated['allow_negative_balance'] = $request->boolean('allow_negative_balance');
         $studentWallet->update($validated);
 
         return redirect()
             ->route('tenant.student-wallets.show', $studentWallet)
             ->with('success', 'Carteira atualizada com sucesso.');
+    }
+
+    public function destroy(Request $request, StudentWallet $studentWallet): RedirectResponse
+    {
+        $this->ensureWalletBelongsToTenant($request, $studentWallet);
+        $studentWallet->delete();
+
+        return redirect()
+            ->route('tenant.student-wallets.index')
+            ->with('success', 'Carteira excluída com sucesso.');
     }
 
     private function validateWallet(Request $request, int $tenantId, ?StudentWallet $wallet = null): array
@@ -121,7 +129,7 @@ class StudentWalletController extends Controller
             ],
             'balance' => ['required', 'numeric'],
             'credit_limit' => ['required', 'numeric', 'min:0'],
-            'allow_negative_balance' => ['nullable', 'boolean'],
+            'allow_negative_balance' => ['required', 'boolean'],
         ]);
     }
 

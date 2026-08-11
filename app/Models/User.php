@@ -81,6 +81,25 @@ class User extends Authenticatable
         return $this->hasMany(Operator::class);
     }
 
+    public function operatorProfile(): ?Operator
+    {
+        if ($this->relationLoaded('operators')) {
+            return $this->operators->first();
+        }
+
+        return $this->operators()->with('school')->first();
+    }
+
+    /**
+     * Escola vinculada ao operador (null = todas as escolas do tenant).
+     */
+    public function scopedSchoolId(): ?int
+    {
+        $schoolId = $this->operatorProfile()?->school_id;
+
+        return $schoolId ? (int) $schoolId : null;
+    }
+
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class, 'created_by');

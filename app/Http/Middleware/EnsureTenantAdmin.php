@@ -16,12 +16,12 @@ class EnsureTenantAdmin
             abort(403, 'Usuário não autenticado.');
         }
 
-        if ($user->user_type !== 'tenant_admin') {
-            abort(403, 'Acesso permitido apenas para tenant admin.');
+        if (! in_array($user->user_type, ['tenant_admin', 'manager'], true)) {
+            abort(403, 'Acesso permitido apenas para gestores do tenant.');
         }
 
         if (! $user->tenant_id) {
-            abort(403, 'Tenant admin sem tenant_id definido.');
+            abort(403, 'Usuário sem tenant_id definido.');
         }
 
         return $next($request);

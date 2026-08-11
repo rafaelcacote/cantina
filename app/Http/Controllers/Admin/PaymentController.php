@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use App\Models\ParentGuardian;
 use App\Models\Payment;
 use App\Models\Student;
+use App\Models\TabEntry;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,7 +28,7 @@ class PaymentController extends Controller
         $to = $request->string('to')->toString();
 
         $payments = Payment::query()
-            ->with(['student', 'parent', 'creator'])
+            ->with(['student', 'parent', 'order', 'tabEntry', 'creator'])
             ->when($tenantId, fn ($query) => $query->where('tenant_id', $tenantId))
             ->when($studentId, fn ($query) => $query->where('student_id', $studentId))
             ->when($parentId, fn ($query) => $query->where('parent_id', $parentId))
@@ -64,6 +66,8 @@ class PaymentController extends Controller
             'tenants' => DB::table('tenants')->select(['id', 'name'])->orderBy('name')->get(),
             'students' => Student::query()->select(['id', 'tenant_id', 'name'])->orderBy('name')->get(),
             'parents' => ParentGuardian::query()->select(['id', 'tenant_id', 'name'])->orderBy('name')->get(),
+            'orders' => Order::query()->select(['id', 'tenant_id', 'student_id', 'final_amount', 'status'])->orderByDesc('id')->limit(200)->get(),
+            'tabEntries' => TabEntry::query()->select(['id', 'tenant_id', 'student_id', 'amount', 'status', 'entry_date'])->orderByDesc('id')->limit(200)->get(),
             'users' => User::query()->select(['id', 'tenant_id', 'name'])->orderBy('name')->get(),
             'methods' => $this->methods(),
             'statuses' => $this->statuses(),
@@ -82,7 +86,7 @@ class PaymentController extends Controller
 
     public function show(Payment $payment): View
     {
-        $payment->load(['student', 'parent', 'creator']);
+        $payment->load(['student', 'parent', 'order', 'tabEntry', 'creator']);
 
         return view('pages.admin.payments.show', [
             'title' => 'Detalhes do Pagamento',
@@ -114,12 +118,23 @@ class PaymentController extends Controller
             ->with('success', 'Status do pagamento atualizado com sucesso.');
     }
 
+    public function destroy(Payment $payment): RedirectResponse
+    {
+        $payment->delete();
+
+        return redirect()
+            ->route('admin.payments.index')
+            ->with('success', 'Pagamento excluído com sucesso.');
+    }
+
     private function rules(): array
     {
         return [
             'tenant_id' => ['required', 'integer', Rule::exists('tenants', 'id')],
             'student_id' => ['nullable', 'integer', Rule::exists('students', 'id')->where(fn ($query) => $query->where('tenant_id', request('tenant_id')))],
             'parent_id' => ['nullable', 'integer', Rule::exists('parents', 'id')->where(fn ($query) => $query->where('tenant_id', request('tenant_id')))],
+            'order_id' => ['nullable', 'integer', Rule::exists('orders', 'id')->where(fn ($query) => $query->where('tenant_id', request('tenant_id')))],
+            'tab_entry_id' => ['nullable', 'integer', Rule::exists('tab_entries', 'id')->where(fn ($query) => $query->where('tenant_id', request('tenant_id')))],
             'amount' => ['required', 'numeric', 'min:0'],
             'payment_method' => ['required', Rule::in(array_keys($this->methods()))],
             'reference' => ['nullable', 'string', 'max:255'],

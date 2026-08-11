@@ -52,4 +52,12 @@ class ParentGuardian extends Model
     {
         return $this->hasMany(ParentalPreselectedOrder::class, 'parent_id');
     }
+
+    public static function forPortalUser(User $user): ?self
+    {
+        return static::query()
+            ->where('tenant_id', (int) $user->tenant_id)
+            ->where('user_id', $user->id)
+            ->first();
+    }
 }

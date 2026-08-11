@@ -5,7 +5,7 @@ Atualize os checkboxes (`[ ]` → `[x]`) conforme cada item for concluído.
 
 **Referência de contexto:** [saas-context.md](./saas-context.md)
 
-**Última revisão:** março/2026
+**Última revisão:** ago/2026
 
 ---
 
@@ -16,13 +16,14 @@ Atualize os checkboxes (`[ ]` → `[x]`) conforme cada item for concluído.
 | Banco + Models + Migrations | ✅ ~95% | 32 models, multi-tenant com `tenant_id` |
 | Seeders | ✅ | `SaasInitialSeeder` com tenant demo |
 | Painel Super Admin (`/admin`) | ✅ ~95% | CRUD completo dos módulos principais |
-| Painel Tenant Admin (`/tenant`) | ✅ ~95% | CRUD operacional completo (Fase 1 concluída) |
-| Regras de negócio automáticas | ❌ ~5% | Só cadastro manual |
-| Módulos SaaS (planos, convites) | ❌ | Models existem, sem telas |
-| Outros perfis (manager, operator, parent, student) | ❌ | Sem painéis |
-| API REST | ❌ | `routes/api.php` não existe |
-| App mobile (Expo) | ❌ | Não iniciado |
-| Testes automatizados | ❌ | Só exemplos padrão Laravel/Pest |
+| Painel Tenant Admin (`/tenant`) | ✅ ~95% | CRUD operacional + parental/sistema (Fase 6) |
+| Regras de negócio automáticas | ✅ ~95% | OrderService na confirmação/cancelamento do pedido |
+| Módulos SaaS (planos, convites) | ✅ ~95% | CRUD admin + aceite de convite; falta visão no tenant |
+| Outros perfis (manager, operator, parent, student) | ✅ ~70% | Manager/operator ok; parent/student → **Fase 7 (web + PWA)** |
+| Parent/Student web responsivo + PWA | 🟡 ~55% | Portal parent: convite, filhos, carteira, pedidos |
+| API REST | ❌ | Adiada para Fase 8 |
+| App nativo (Expo) | ❌ | Opcional — Fase 9 |
+| Testes automatizados | 🟡 | Pest em fases 3–6; falta CI e cobertura ampla |
 
 ### Credenciais de teste (seeder)
 
@@ -30,6 +31,10 @@ Atualize os checkboxes (`[ ]` → `[x]`) conforme cada item for concluído.
 |--------|--------|-------|-------------|
 | Super Admin | `superadmin@cantina.local` | `password` | `/admin/tenants` |
 | Tenant Admin | `admin@demo.local` | `password` | `/tenant/dashboard` |
+| Gerente (manager) | `manager@demo.local` | `password` | `/tenant/dashboard` |
+| Operador | `operator@demo.local` | `password` | `/operator/dashboard` |
+| Responsável (parent) | `parent@demo.local` | `password` | `/parent` |
+| Aluno (student) | `student@demo.local` | `password` | `/student` |
 
 ```bash
 php artisan migrate --seed   # banco vazio
@@ -159,41 +164,42 @@ Para cada item:
 
 **Prioridade:** 🟠 Média-alta — após Fase 1 e 2.
 
-**Sugestão de arquitetura:** criar `app/Services/` (ex.: `OrderService`, `WalletService`, `StockService`).
+**Arquitetura:** `app/Services/` — `OrderService`, `StockService`, `WalletService`, `TabService`, `PinService`, `ParentalControlService`.
 
 ### 3.1 Pedidos ↔ Estoque
 
-- [ ] Baixar estoque ao confirmar/entregar pedido (produtos com `stock_controlled`)
-- [ ] Registrar `StockMovement` automaticamente
-- [ ] Validar estoque insuficiente antes de confirmar
-- [ ] Estorno de estoque em cancelamento (se aplicável)
+- [x] Baixar estoque ao confirmar/entregar pedido (produtos com `stock_controlled`)
+- [x] Registrar `StockMovement` automaticamente
+- [x] Validar estoque insuficiente antes de confirmar
+- [x] Estorno de estoque em cancelamento (se aplicável)
 
 ### 3.2 Pedidos ↔ Financeiro
 
-- [ ] Débito na carteira quando `payment_mode = wallet`
-- [ ] Registrar `WalletTransaction` com saldo antes/depois
-- [ ] Lançamento em fiado quando `payment_mode = tab`
-- [ ] Atualizar `StudentTab.current_balance`
-- [ ] Criar `TabEntry` vinculado ao pedido
-- [ ] Registrar `Payment` quando pagamento à vista (cash/pix/card)
+- [x] Débito na carteira quando `payment_mode = wallet`
+- [x] Registrar `WalletTransaction` com saldo antes/depois
+- [x] Lançamento em fiado quando `payment_mode = tab`
+- [x] Atualizar `StudentTab.current_balance`
+- [x] Criar `TabEntry` vinculado ao pedido
+- [x] Registrar `Payment` quando pagamento à vista (cash/pix/card)
 
 ### 3.3 Regras de fiado e PIN
 
-- [ ] Fiado só permitido em produtos da seção **Lanches** (não conveniência)
-- [ ] Exigir PIN do aluno para compra no fiado
-- [ ] Integrar com `PurchaseAuthorization` quando necessário
+- [x] Fiado só permitido em produtos da seção **Lanches** (não conveniência)
+- [x] Exigir PIN do aluno para compra no fiado
+- [x] Integrar com `PurchaseAuthorization` quando necessário
 
 ### 3.4 Controle parental na compra
 
-- [ ] Validar categorias permitidas
-- [ ] Validar produtos bloqueados
-- [ ] Respeitar limites diários/semanais (se modelado)
+- [x] Validar categorias permitidas
+- [x] Validar produtos bloqueados
+- [x] Respeitar limites diários/semanais (se modelado)
 
 ### 3.5 Alertas
 
-- [ ] Notificação ou destaque quando estoque ≤ mínimo do produto
+- [x] Notificação ou destaque quando estoque ≤ mínimo do produto
 - [ ] (Opcional) Job agendado para verificar estoques baixos
 
+**Gatilho:** transição de status do pedido para `confirmed` / `preparing` / `ready` / `delivered` via `OrderService::transitionStatus` (tenant e admin). Cancelamento estorna efeitos.
 ---
 
 ## Fase 4 — Módulos SaaS (gestão da plataforma)
@@ -204,17 +210,17 @@ Para cada item:
 
 | # | Entidade | Model | Status telas |
 |---|----------|-------|--------------|
-| 4.1 | Planos | `Plan` | ❌ Sem CRUD |
-| 4.2 | Assinaturas | `Subscription` | ❌ Sem CRUD |
-| 4.3 | Convites de tenant | `TenantInvitation` | ❌ Sem CRUD |
-| 4.4 | Operadores | `Operator` | ❌ Sem CRUD |
+| 4.1 | Planos | `Plan` | ✅ CRUD `/admin/plans` |
+| 4.2 | Assinaturas | `Subscription` | ✅ CRUD `/admin/subscriptions` |
+| 4.3 | Convites de tenant | `TenantInvitation` | ✅ CRUD + aceite público `/invite/{token}` |
+| 4.4 | Operadores | `Operator` | ✅ CRUD `/admin/operators` |
 
 ### Checklist
 
-- [ ] **4.1** CRUD Planos no `/admin`
-- [ ] **4.2** CRUD Assinaturas no `/admin` (vincular tenant + plano)
-- [ ] **4.3** Fluxo de convite (criar convite, aceitar, criar usuário tenant)
-- [ ] **4.4** CRUD Operadores (vincular usuário + escola/permissões)
+- [x] **4.1** CRUD Planos no `/admin`
+- [x] **4.2** CRUD Assinaturas no `/admin` (vincular tenant + plano)
+- [x] **4.3** Fluxo de convite (criar convite, aceitar, criar usuário tenant)
+- [x] **4.4** CRUD Operadores (vincular usuário + escola/permissões)
 - [ ] (Opcional) Tenant admin visualizar própria assinatura
 
 ---
@@ -227,24 +233,24 @@ Para cada item:
 
 | Perfil | Descrição | Status |
 |--------|-----------|--------|
-| `manager` | Gerente da cantina | ❌ Sem painel |
-| `operator` | Caixa / atendente | ❌ Sem painel |
-| `parent` | Responsável (web ou app) | ❌ Sem painel |
-| `student` | Aluno | ❌ Sem painel |
+| `manager` | Gerente da cantina | ✅ Painel `/tenant` (mesmo do tenant_admin) |
+| `operator` | Caixa / atendente | ✅ Painel `/operator` (pedidos, alunos, carteiras) |
+| `parent` | Responsável (web PWA) | ⏸ Próximo — **Fase 7** |
+| `student` | Aluno (web PWA) | ⏸ Próximo — **Fase 7** |
 
 ### Checklist
 
-- [ ] Definir rotas e middleware por perfil (`EnsureManager`, `EnsureOperator`, etc.)
-- [ ] Menu e dashboards específicos
-- [ ] Escopo de dados (operador vê só sua escola?)
+- [x] Definir rotas e middleware por perfil (`EnsureOperator`; manager via `EnsureTenantAdmin`)
+- [x] Menu e dashboards específicos
+- [x] Escopo de dados (operador vê só sua escola quando `operators.school_id` definido)
 - [ ] Policies ou Gates granulares (substituir só `user_type` no middleware)
-- [ ] Redirect no login por `user_type`
+- [x] Redirect no login por `user_type`
 
 ### Escopo sugerido por perfil
 
 - **operator:** pedidos, consulta aluno/carteira, caixa rápido
 - **manager:** quase tudo do tenant_admin, sem config SaaS
-- **parent / student:** via API + app mobile (Fase 7)
+- **parent / student:** web responsivo + PWA (**Fase 7**); API/Expo depois se necessário
 
 ---
 
@@ -252,32 +258,77 @@ Para cada item:
 
 **Objetivo:** espelhar no `/tenant` o que hoje só existe no `/admin` (se fizer sentido para o gestor).
 
-**Prioridade:** 🟡 Média-baixa.
+**Prioridade:** 🟡 Média-baixa.  
+**Status:** ✅ Concluída (exceto pedidos pré-definidos).
 
 ### Admin-only hoje → considerar no tenant
 
-- [ ] Controles parentais
-- [ ] Categorias permitidas
-- [ ] Produtos bloqueados
-- [ ] Pedidos pré-definidos
-- [ ] Autorizações PIN
-- [ ] Notificações (visualização)
-- [ ] Audit logs (visualização)
+- [x] Controles parentais
+- [x] Categorias permitidas
+- [x] Produtos bloqueados
+- [ ] Pedidos pré-definidos *(adiado — Fase 7, painel parent)*
+- [x] Autorizações PIN
+- [x] Notificações (visualização)
+- [x] Audit logs (visualização)
 
-**Nota:** responsáveis podem configurar via app no futuro; tenant admin pode precisar só de consulta/suporte.
+**Nota:** responsável configura no painel parent (Fase 7); tenant admin mantém consulta/suporte.
 
 ---
 
-## Fase 7 — API REST
+## Fase 7 — Parent/Student web responsivo + PWA (Vue)
 
-**Objetivo:** backend para app mobile e integrações.
+**Objetivo:** painéis mobile-first para responsável e aluno, instaláveis como PWA.  
+**Stack prevista:** Laravel + **Inertia.js + Vue 3** (área `/parent` e `/student`); painéis admin/tenant/operator continuam em Blade.
 
-**Prioridade:** 🟡 Média — após regras de negócio (Fase 3).
+**Prioridade:** 🔴 Alta — próxima fase.  
+**Por quê Vue/Inertia:** UX mais fluida no mobile sem reescrever o backend; Vue entra só na área parent/student (pode coexistir com Blade).
+
+### Setup técnico
+
+- [x] Instalar Inertia + Vue 3 + Vite (adapter Laravel)
+- [x] Layout mobile-first (Vue) separado do TailAdmin
+- [x] Middleware `EnsureParent` / `EnsureStudent` + redirect no login
+- [x] Manifest + service worker (PWA: ícone, offline leve, "Adicionar à tela inicial")
+- [x] Seeders: usuários `parent` e `student` de demo
+
+### Painel responsável (`/parent`)
+
+- [x] Dashboard: filhos, saldos, alertas *(MVP inicial)*
+- [x] Convite do tenant: gerar link, WhatsApp/e-mail, aceite mobile
+- [x] Cadastro de acesso + filhos no convite (alunos pendentes)
+- [x] Filhos vinculados (leitura + cadastro extra)
+- [x] Enviar acesso do filho (WhatsApp / copiar / compartilhar)
+- [x] Carteira / extrato por filho
+- [x] Recarga Pix (solicitação + comprovante + aprovação do gestor)
+- [x] Pedidos (listar / acompanhar status)
+- [ ] Controle parental (limites, categorias, bloqueios)
+- [ ] Pedidos pré-definidos
+- [ ] Notificações
+
+### Painel aluno (`/student`)
+
+- [x] Cardápio do dia
+- [x] Fazer / acompanhar pedido
+- [x] Saldo da carteira *(MVP no dashboard)*
+- [ ] PIN / autorizações (conforme regras)
+
+### Qualidade
+
+- [x] Feature tests de escopo tenant + perfil *(Phase7PortalTest)*
+- [x] UX ok em viewport mobile (375px+) *(layout MobileShell)*
+
+---
+
+## Fase 8 — API REST
+
+**Objetivo:** backend JSON para integrações e, se necessário, app nativo.
+
+**Prioridade:** 🟡 Média — após MVP parent/student (Fase 7).
 
 ### Checklist
 
 - [ ] Criar `routes/api.php` e registrar em `bootstrap/app.php`
-- [ ] Autenticação API (Sanctum ou Passport)
+- [ ] Autenticação API (Sanctum)
 - [ ] Middleware de tenant na API
 - [ ] Resources/Transformers para JSON consistente
 - [ ] Endpoints principais:
@@ -294,28 +345,28 @@ Para cada item:
 
 ---
 
-## Fase 8 — App mobile (React Native + Expo)
+## Fase 9 — App nativo (React Native + Expo) — opcional
 
-**Objetivo:** app para responsáveis e alunos.
+**Objetivo:** app nas stores **somente se** PWA não atender (push avançado, retenção, exigência de loja).
 
-**Prioridade:** 🟢 Baixa-média — depende da Fase 7.
+**Prioridade:** 🟢 Baixa — depende da Fase 8.
 
 ### Checklist
 
-- [ ] Inicializar projeto Expo no repositório (ou monorepo)
+- [ ] Avaliar se PWA cobre o uso real (go/no-go)
+- [ ] Inicializar projeto Expo (ou monorepo)
 - [ ] Auth contra API
-- [ ] Telas responsável: filhos, saldo, pedidos, limites
-- [ ] Telas aluno: cardápio, pedido, PIN
-- [ ] Push notifications (opcional)
+- [ ] Telas responsável e aluno (espelhar Fase 7)
+- [ ] Push notifications
 - [ ] Publicação (stores) — fora do escopo inicial
 
 ---
 
-## Fase 9 — Qualidade, DevOps e polish
+## Fase 10 — Qualidade, DevOps e polish
 
 **Objetivo:** sustentabilidade do projeto.
 
-**Prioridade:** 🟢 Contínua.
+**Prioridade:** 🟢 Contínua (paralela às fases acima).
 
 ### Testes
 
@@ -341,15 +392,16 @@ Para cada item:
 ## Ordem recomendada de execução
 
 ```
-Fase 1  → Lacunas tenant (seções, categorias, vínculos)
-Fase 2  → Teste manual ponta a ponta
-Fase 3  → Regras de negócio (Services)
-Fase 4  → SaaS (planos, assinaturas, convites, operadores)
-Fase 5  → Perfis manager/operator
-Fase 6  → Parental/sistema no tenant (se necessário)
-Fase 7  → API REST
-Fase 8  → App mobile
-Fase 9  → Testes + polish (paralelo às fases acima)
+Fase 1  → Lacunas tenant (seções, categorias, vínculos)     ✅
+Fase 2  → Teste manual ponta a ponta                         ✅
+Fase 3  → Regras de negócio (Services)                       ✅
+Fase 4  → SaaS (planos, assinaturas, convites, operadores)   ✅
+Fase 5  → Perfis manager/operator                            ✅
+Fase 6  → Parental/sistema no tenant                         ✅
+Fase 7  → Parent/Student web + PWA (Vue + Inertia)           ← agora
+Fase 8  → API REST
+Fase 9  → App nativo Expo (opcional)
+Fase 10 → Testes + devops (paralelo)
 ```
 
 ---
@@ -364,8 +416,10 @@ Fase 9  → Testes + polish (paralelo às fases acima)
 | Menu tenant/admin | `app/Helpers/MenuHelper.php` |
 | Controllers tenant | `app/Http/Controllers/Tenant/` |
 | Controllers admin | `app/Http/Controllers/Admin/` |
+| Regras de negócio | `app/Services/` (`OrderService`, `StockService`, …) |
 | Seeder demo | `database/seeders/SaasInitialSeeder.php` |
 | Middleware tenant | `app/Http/Middleware/EnsureTenantContext.php`, `EnsureTenantAdmin.php` |
+| Parent/Student (Fase 7) | Inertia + Vue 3 em `/parent` e `/student` (a criar) |
 
 ---
 
@@ -385,3 +439,11 @@ Fase 9  → Testes + polish (paralelo às fases acima)
 | mar/2026 | Documento inicial com Fases 0–9 após conclusão do CRUD tenant (incl. pedidos e financeiro) |
 | mar/2026 | Fase 1 concluída: seções, categorias e vínculos no tenant |
 | mar/2026 | Fase 2 iniciada: roteiro em `testes-fluxo-manual.md` + correções de estoque/UX |
+| ago/2026 | Fase 3: Services (estoque, carteira, fiado, PIN, parental) no `updateStatus` do pedido |
+| ago/2026 | Fase 4: CRUD Planos, Assinaturas, Convites e Operadores no `/admin` + aceite `/invite/{token}` |
+| ago/2026 | Fase 5 (MVP): manager no `/tenant`, operador no `/operator`, escopo por escola |
+| ago/2026 | Fase 6: parental + notificações + auditoria no `/tenant` |
+| ago/2026 | Roadmap reordenado: Fase 7 = web+PWA (Vue/Inertia); API → 8; Expo opcional → 9 |
+| ago/2026 | Fase 7 setup: Inertia+Vue, layout MobileShell, dashboards `/parent` e `/student`, PWA |
+| ago/2026 | Portal responsável: convite do tenant + cadastro de filhos + filhos/pedidos/conta |
+| ago/2026 | Recarga Pix: pedido no app, comprovante e fila de aprovação no tenant |

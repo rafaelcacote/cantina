@@ -5,14 +5,22 @@ namespace App\Http\Controllers\Tenant;
 use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Models\Student;
+use App\Services\PinService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class StudentController extends Controller
 {
-    private const STATUS_OPTIONS = ['pending', 'active', 'inactive', 'blocked'];
+    private const STATUS_OPTIONS = [
+        'pending' => 'Pendente',
+        'active' => 'Ativo',
+        'inactive' => 'Inativo',
+        'blocked' => 'Bloqueado',
+    ];
 
     public function index(Request $request): View
     {
@@ -64,12 +72,16 @@ class StudentController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, PinService $pinService): RedirectResponse
     {
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateStudent($request, $tenantId);
         $validated['tenant_id'] = $tenantId;
         $validated['status'] = $validated['status'] ?? 'pending';
+        $validated['photo_url'] = $this->storePhoto($request, $tenantId);
+        $validated = $this->applyPin($validated, $pinService);
+
+        unset($validated['photo']);
 
         $student = Student::query()->create($validated);
 
@@ -86,6 +98,50 @@ class StudentController extends Controller
         return view('pages.tenant.students.show', [
             'title' => 'Detalhes do Aluno',
             'student' => $student,
+            'statusOptions' => self::STATUS_OPTIONS,
+        ]);
+    }
+
+    public function parents(Request $request, Student $student): View|JsonResponse
+    {
+        $this->ensureStudentBelongsToTenant($request, $student);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            $links = $student->studentParents()
+                ->with(['parent'])
+                ->latest()
+                ->get()
+                ->map(fn ($link) => [
+                    'id' => $link->id,
+                    'parent_name' => $link->parent?->name ?? '-',
+                    'phone' => $link->parent?->phone ?? '-',
+                    'relationship_type' => $link->relationship_type ?: '-',
+                    'is_primary' => (bool) $link->is_primary,
+                    'financial_responsible' => (bool) $link->financial_responsible,
+                    'show_url' => route('tenant.student-parents.show', $link),
+                    'edit_url' => route('tenant.student-parents.edit', $link),
+                ]);
+
+            return response()->json([
+                'student' => [
+                    'id' => $student->id,
+                    'name' => $student->name,
+                ],
+                'links' => $links,
+                'create_url' => route('tenant.student-parents.create', ['student_id' => $student->id]),
+            ]);
+        }
+
+        $links = $student->studentParents()
+            ->with(['parent'])
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('pages.tenant.students.parents', [
+            'title' => 'Responsáveis do Aluno',
+            'student' => $student,
+            'links' => $links,
         ]);
     }
 
@@ -105,17 +161,43 @@ class StudentController extends Controller
         ]);
     }
 
-    public function update(Request $request, Student $student): RedirectResponse
+    public function update(Request $request, Student $student, PinService $pinService): RedirectResponse
     {
         $this->ensureStudentBelongsToTenant($request, $student);
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateStudent($request, $tenantId, $student);
+
+        if ($request->hasFile('photo')) {
+            $this->deleteStoredPhoto($student->photo_url);
+            $validated['photo_url'] = $this->storePhoto($request, $tenantId);
+        }
+
+        $validated = $this->applyPin($validated, $pinService);
+
+        unset($validated['photo']);
 
         $student->update($validated);
 
         return redirect()
             ->route('tenant.students.show', $student)
             ->with('success', 'Aluno atualizado com sucesso.');
+    }
+
+    public function destroy(Request $request, Student $student): RedirectResponse
+    {
+        $this->ensureStudentBelongsToTenant($request, $student);
+
+        if ($student->orders()->exists()) {
+            return back()->withErrors([
+                'delete' => 'Não é possível excluir o aluno enquanto houver pedidos vinculados.',
+            ]);
+        }
+
+        $student->delete();
+
+        return redirect()
+            ->route('tenant.students.index')
+            ->with('success', 'Aluno excluído com sucesso.');
     }
 
     private function validateStudent(Request $request, int $tenantId, ?Student $student = null): array
@@ -139,14 +221,37 @@ class StudentController extends Controller
             'grade' => ['nullable', 'string', 'max:100'],
             'classroom' => ['nullable', 'string', 'max:100'],
             'shift' => ['nullable', 'string', 'max:100'],
-            'status' => ['nullable', Rule::in(self::STATUS_OPTIONS)],
-            'photo_url' => ['nullable', 'string', 'max:1000'],
-            'personal_pin_hash' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', Rule::in(array_keys(self::STATUS_OPTIONS))],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp,gif', 'max:2048'],
+            'personal_pin' => ['nullable', 'string', 'max:20'],
             'can_buy_on_credit' => ['required', 'boolean'],
             'can_buy_on_tab' => ['required', 'boolean'],
             'convenience_access' => ['required', 'boolean'],
             'snack_access' => ['required', 'boolean'],
         ]);
+    }
+
+    private function applyPin(array $validated, PinService $pinService): array
+    {
+        return $pinService->applyToPayload($validated, $validated['personal_pin'] ?? null);
+    }
+
+    private function storePhoto(Request $request, int $tenantId): ?string
+    {
+        if (! $request->hasFile('photo')) {
+            return null;
+        }
+
+        return $request->file('photo')->store("students/{$tenantId}", 'public');
+    }
+
+    private function deleteStoredPhoto(?string $photoUrl): void
+    {
+        if (! $photoUrl || str_starts_with($photoUrl, 'http')) {
+            return;
+        }
+
+        Storage::disk('public')->delete($photoUrl);
     }
 
     private function ensureStudentBelongsToTenant(Request $request, Student $student): void

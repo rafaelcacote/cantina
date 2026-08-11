@@ -20,6 +20,7 @@ class TenantFactory extends Factory
             'document' => fake()->optional()->numerify('##############'),
             'email' => fake()->optional()->companyEmail(),
             'phone' => fake()->optional()->phoneNumber(),
+            'pix' => fake()->optional()->numerify('##############'),
             'logo_url' => fake()->optional()->imageUrl(),
             'status' => 'active',
             'trial_ends_at' => fake()->optional()->dateTimeBetween('now', '+30 days'),

@@ -70,7 +70,10 @@ class TabEntryController extends Controller
         $validated = $request->validate($this->rules());
         $validated['authorized_by_pin'] = $request->boolean('authorized_by_pin');
 
-        TabEntry::create($validated);
+        DB::transaction(function () use ($validated) {
+            $entry = TabEntry::create($validated);
+            $entry->studentTab?->recalculateBalance();
+        });
 
         return redirect()
             ->route('admin.tab-entries.index')
@@ -104,11 +107,27 @@ class TabEntryController extends Controller
             'status' => ['required', Rule::in(array_keys($this->statuses()))],
         ]);
 
-        $tabEntry->update($validated);
+        DB::transaction(function () use ($tabEntry, $validated) {
+            $tabEntry->update($validated);
+            $tabEntry->studentTab?->recalculateBalance();
+        });
 
         return redirect()
             ->route('admin.tab-entries.show', $tabEntry)
             ->with('success', 'Status do lançamento atualizado com sucesso.');
+    }
+
+    public function destroy(TabEntry $tabEntry): RedirectResponse
+    {
+        DB::transaction(function () use ($tabEntry) {
+            $studentTab = $tabEntry->studentTab;
+            $tabEntry->delete();
+            $studentTab?->recalculateBalance();
+        });
+
+        return redirect()
+            ->route('admin.tab-entries.index')
+            ->with('success', 'Lançamento excluído com sucesso.');
     }
 
     private function rules(): array

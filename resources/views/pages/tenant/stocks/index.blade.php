@@ -4,25 +4,30 @@
     <div class="space-y-6">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-800 dark:text-white/90">Estoque</h1>
+                <h1 class="flex items-center gap-2.5 text-2xl font-semibold text-gray-800 dark:text-white/90">
+                    <span class="inline-flex size-8 items-center justify-center text-brand-500 dark:text-brand-400">
+                        {!! \App\Helpers\MenuHelper::getIconSvg('tables') !!}
+                    </span>
+                    Estoque
+                </h1>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Gerencie o estoque dos produtos do seu tenant.</p>
             </div>
             <a href="{{ route('tenant.stock-movements.index') }}"
-               class="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/5">
+               class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-white/5">
                 Ver Movimentações
             </a>
         </div>
 
-        @if (session('success'))
-            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900/40 dark:bg-green-900/20 dark:text-green-300">
-                {{ session('success') }}
+        @if ($errors->any())
+            <div class="rounded-xl border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
+                {{ $errors->first() }}
             </div>
         @endif
 
         <div class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
-            <form method="GET" action="{{ route('tenant.stocks.index') }}" class="grid grid-cols-1 gap-3 lg:grid-cols-5">
+            <form method="GET" action="{{ route('tenant.stocks.index') }}" class="mb-4 flex w-full flex-row flex-wrap gap-3">
                 <select id="section_filter" name="section_id"
-                        class="h-11 rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden dark:border-gray-700 dark:text-white/90">
+                        class="h-11 min-w-0 flex-1 basis-0 rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden dark:border-gray-700 dark:text-white/90">
                     <option value="">Todas as seções</option>
                     @foreach ($sections as $section)
                         <option value="{{ $section->id }}" @selected($sectionId === (int) $section->id)>{{ $section->name }}</option>
@@ -30,7 +35,7 @@
                 </select>
 
                 <select id="category_filter" name="category_id"
-                        class="h-11 rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden dark:border-gray-700 dark:text-white/90">
+                        class="h-11 min-w-0 flex-1 basis-0 rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden dark:border-gray-700 dark:text-white/90">
                     <option value="">Todas as categorias</option>
                     @foreach ($categories as $category)
                         <option value="{{ $category->id }}" data-section-id="{{ $category->section_id }}" @selected($categoryId === (int) $category->id)>{{ $category->name }}</option>
@@ -38,7 +43,7 @@
                 </select>
 
                 <select id="product_filter" name="product_id"
-                        class="h-11 rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden dark:border-gray-700 dark:text-white/90 lg:col-span-2">
+                        class="h-11 min-w-0 flex-[1.4] basis-0 rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden dark:border-gray-700 dark:text-white/90">
                     <option value="">Todos os produtos</option>
                     @foreach ($products as $product)
                         <option
@@ -52,73 +57,97 @@
                     @endforeach
                 </select>
 
-                <label class="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-300">
-                    <input type="checkbox" name="low_stock" value="1" class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500" @checked($lowStock)>
-                    Apenas estoque baixo
-                </label>
+                <select name="low_stock"
+                        class="h-11 min-w-0 flex-1 basis-0 rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden dark:border-gray-700 dark:text-white/90">
+                    <option value="0" @selected(! $lowStock)>Todos os status</option>
+                    <option value="1" @selected($lowStock)>Apenas estoque baixo</option>
+                </select>
 
-                <div class="lg:col-span-5 flex justify-end gap-2">
-                    <button type="submit"
-                            class="inline-flex h-11 items-center justify-center rounded-lg bg-brand-500 px-4 text-sm font-medium text-white hover:bg-brand-600">
-                        Filtrar
-                    </button>
-                    <a href="{{ route('tenant.stocks.index') }}"
-                       class="inline-flex h-11 items-center justify-center rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/5">
-                        Limpar
-                    </a>
-                </div>
+                <button type="submit"
+                        class="inline-flex h-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/5">
+                    Filtrar
+                </button>
             </form>
-        </div>
 
-        <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-                    <thead class="bg-gray-50 dark:bg-gray-900/50">
-                        <tr class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                            <th class="px-4 py-3">Produto</th>
-                            <th class="px-4 py-3">Seção</th>
-                            <th class="px-4 py-3">Categoria</th>
-                            <th class="px-4 py-3">Qtd Atual</th>
-                            <th class="px-4 py-3">Reservada</th>
-                            <th class="px-4 py-3">Status</th>
-                            <th class="px-4 py-3 text-right">Ações</th>
-                        </tr>
+                    <thead>
+                    <tr class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        <th class="px-4 py-3">Produto</th>
+                        <th class="px-4 py-3">Seção</th>
+                        <th class="px-4 py-3">Categoria</th>
+                        <th class="px-4 py-3">Qtd atual</th>
+                        <th class="px-4 py-3">Reservada</th>
+                        <th class="px-4 py-3">Status</th>
+                        <th class="px-4 py-3 text-right">Ações</th>
+                    </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                        @forelse ($stocks as $stock)
-                            @php
-                                $product = $stock->product;
-                                $isLow = $product ? $stock->quantity <= $product->minimum_stock_alert : false;
-                            @endphp
-                            <tr>
-                                <td class="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">{{ $product?->name ?? '-' }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $product?->section?->name ?? '-' }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $product?->category?->name ?? '-' }}</td>
-                                <td class="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">{{ $stock->quantity }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $stock->reserved_quantity }}</td>
-                                <td class="px-4 py-3">
-                                    <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium {{ $isLow ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' }}">
-                                        {{ $isLow ? 'Baixo' : 'OK' }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 text-right">
-                                    <div class="inline-flex items-center gap-2">
-                                        <a href="{{ route('tenant.stocks.show', $stock) }}" class="rounded-md px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-white/5">Visualizar</a>
-                                        <a href="{{ route('tenant.stocks.edit', $stock) }}" class="rounded-md px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5">Editar</a>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                                    Nenhum registro de estoque encontrado.
-                                </td>
-                            </tr>
-                        @endforelse
+                    @forelse ($stocks as $stock)
+                        @php
+                            $product = $stock->product;
+                            $isLow = $product ? $stock->quantity <= $product->minimum_stock_alert : false;
+                        @endphp
+                        <tr>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">{{ $product?->name ?? '-' }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $product?->section?->name ?? '-' }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $product?->category?->name ?? '-' }}</td>
+                            <td class="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">{{ $stock->quantity }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $stock->reserved_quantity }}</td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium {{ $isLow ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' }}">
+                                    {{ $isLow ? 'Baixo' : 'OK' }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <div class="inline-flex items-center gap-1.5">
+                                    <a href="{{ route('tenant.stocks.show', $stock) }}"
+                                       title="Visualizar"
+                                       class="inline-flex size-10 items-center justify-center rounded-lg text-brand-500 transition-colors hover:bg-brand-50 hover:text-brand-700 dark:text-brand-400 dark:hover:bg-white/5 dark:hover:text-brand-300">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                            <path d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12s-3.75 6.75-9.75 6.75S2.25 12 2.25 12Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <circle cx="12" cy="12" r="2.75" stroke="currentColor" stroke-width="1.5"/>
+                                        </svg>
+                                        <span class="sr-only">Visualizar</span>
+                                    </a>
+                                    <a href="{{ route('tenant.stocks.edit', $stock) }}"
+                                       title="Editar"
+                                       class="inline-flex size-10 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                            <path d="M4 20h4l10.5-10.5a2.121 2.121 0 0 0-3-3L5 17v3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M13.5 6.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span class="sr-only">Editar</span>
+                                    </a>
+                                    <form method="POST" action="{{ route('tenant.stocks.destroy', $stock) }}" onsubmit="return confirm('Excluir este registro?')" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                                title="Excluir"
+                                                class="inline-flex size-10 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-error-50 hover:text-error-600 dark:text-gray-400 dark:hover:bg-error-500/10 dark:hover:text-error-400">
+                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                                <path d="M3 6h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                <path d="M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                            </svg>
+                                            <span class="sr-only">Excluir</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                                Nenhum registro de estoque encontrado.
+                            </td>
+                        </tr>
+                    @endforelse
                     </tbody>
                 </table>
             </div>
-            <div class="border-t border-gray-100 px-4 py-3 dark:border-gray-800">
+
+            <div class="mt-4">
                 {{ $stocks->links() }}
             </div>
         </div>

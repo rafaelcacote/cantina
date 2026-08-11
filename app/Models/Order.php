@@ -73,4 +73,14 @@ class Order extends Model
     {
         return $this->hasMany(PurchaseAuthorization::class);
     }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function tabEntries(): HasMany
+    {
+        return $this->hasMany(TabEntry::class);
+    }
 }

@@ -62,7 +62,6 @@ class ProductCategoryController extends Controller
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateCategory($request, $tenantId);
         $validated['tenant_id'] = $tenantId;
-        $validated['active'] = $request->boolean('active');
 
         $category = ProductCategory::query()->create($validated);
 
@@ -102,12 +101,28 @@ class ProductCategoryController extends Controller
         $this->ensureCategoryBelongsToTenant($request, $productCategory);
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateCategory($request, $tenantId, $productCategory);
-        $validated['active'] = $request->boolean('active');
         $productCategory->update($validated);
 
         return redirect()
             ->route('tenant.product-categories.show', $productCategory)
             ->with('success', 'Categoria atualizada com sucesso.');
+    }
+
+    public function destroy(Request $request, ProductCategory $productCategory): RedirectResponse
+    {
+        $this->ensureCategoryBelongsToTenant($request, $productCategory);
+
+        if ($productCategory->products()->exists()) {
+            return back()->withErrors([
+                'delete' => 'Não é possível excluir a categoria enquanto houver produtos vinculados.',
+            ]);
+        }
+
+        $productCategory->delete();
+
+        return redirect()
+            ->route('tenant.product-categories.index')
+            ->with('success', 'Categoria excluída com sucesso.');
     }
 
     private function validateCategory(Request $request, int $tenantId, ?ProductCategory $category = null): array
@@ -128,7 +143,7 @@ class ProductCategoryController extends Controller
                     ->where(fn ($query) => $query->where('tenant_id', $tenantId)),
             ],
             'description' => ['nullable', 'string'],
-            'active' => ['nullable', 'boolean'],
+            'active' => ['required', 'boolean'],
         ]);
     }
 

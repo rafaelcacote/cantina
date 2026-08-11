@@ -2,6 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\AuditLog;
+use App\Models\DailyMenu;
+use App\Models\DailyMenuItem;
+use App\Models\Notification;
 use App\Models\Operator;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -10,28 +14,24 @@ use App\Models\ParentalControlAllowedCategory;
 use App\Models\ParentalControlBlockedProduct;
 use App\Models\ParentalPreselectedOrder;
 use App\Models\ParentalPreselectedOrderItem;
-use App\Models\Payment;
 use App\Models\ParentGuardian;
+use App\Models\Payment;
 use App\Models\Plan;
-use App\Models\DailyMenu;
-use App\Models\DailyMenuItem;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductSection;
+use App\Models\PurchaseAuthorization;
 use App\Models\School;
 use App\Models\Stock;
 use App\Models\Student;
+use App\Models\StudentParent;
 use App\Models\StudentTab;
 use App\Models\StudentWallet;
-use App\Models\StudentParent;
 use App\Models\Subscription;
 use App\Models\TabEntry;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\WalletTransaction;
-use App\Models\PurchaseAuthorization;
-use App\Models\Notification;
-use App\Models\AuditLog;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -63,6 +63,7 @@ class SaasInitialSeeder extends Seeder
                 'document' => '00000000000191',
                 'email' => 'demo@cantina.local',
                 'phone' => '(11) 99999-0000',
+                'pix' => '00000000000191',
                 'status' => 'active',
                 'trial_ends_at' => now()->addDays(15),
             ]
@@ -90,6 +91,20 @@ class SaasInitialSeeder extends Seeder
                 'phone' => '(11) 90000-0002',
                 'cpf' => '11111111111',
                 'user_type' => 'tenant_admin',
+                'active' => true,
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
+            ]
+        );
+
+        User::query()->updateOrCreate(
+            ['email' => 'manager@demo.local'],
+            [
+                'tenant_id' => $tenant->id,
+                'name' => 'Gerente Demo',
+                'phone' => '(11) 90000-0005',
+                'cpf' => '44444444444',
+                'user_type' => 'manager',
                 'active' => true,
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
@@ -151,6 +166,22 @@ class SaasInitialSeeder extends Seeder
                 'snack_access' => true,
             ]
         );
+
+        $studentUser = User::query()->updateOrCreate(
+            ['email' => 'student@demo.local'],
+            [
+                'tenant_id' => $tenant->id,
+                'name' => 'Aluno Demo 1',
+                'phone' => '(11) 90000-0006',
+                'cpf' => '66666666666',
+                'user_type' => 'student',
+                'active' => true,
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
+            ]
+        );
+
+        $studentOne->update(['user_id' => $studentUser->id]);
 
         $parentUser = User::query()->updateOrCreate(
             ['email' => 'parent@demo.local'],

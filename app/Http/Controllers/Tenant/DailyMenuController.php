@@ -63,7 +63,6 @@ class DailyMenuController extends Controller
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateDailyMenu($request, $tenantId);
         $validated['tenant_id'] = $tenantId;
-        $validated['active'] = $request->boolean('active');
 
         $dailyMenu = DailyMenu::query()->create($validated);
 
@@ -107,7 +106,6 @@ class DailyMenuController extends Controller
         $this->ensureDailyMenuBelongsToTenant($request, $dailyMenu);
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateDailyMenu($request, $tenantId, $dailyMenu);
-        $validated['active'] = $request->boolean('active');
 
         $dailyMenu->update($validated);
 
@@ -116,12 +114,21 @@ class DailyMenuController extends Controller
             ->with('success', 'Cardápio atualizado com sucesso.');
     }
 
+    public function destroy(Request $request, DailyMenu $dailyMenu): RedirectResponse
+    {
+        $this->ensureDailyMenuBelongsToTenant($request, $dailyMenu);
+        $dailyMenu->delete();
+
+        return redirect()
+            ->route('tenant.daily-menus.index')
+            ->with('success', 'Cardápio excluído com sucesso.');
+    }
+
     public function addItem(Request $request, DailyMenu $dailyMenu): RedirectResponse
     {
         $this->ensureDailyMenuBelongsToTenant($request, $dailyMenu);
 
         $validated = $request->validate($this->itemRules($dailyMenu));
-        $validated['active'] = $request->boolean('active');
         $validated['tenant_id'] = $dailyMenu->tenant_id;
         $validated['daily_menu_id'] = $dailyMenu->id;
 
@@ -138,7 +145,6 @@ class DailyMenuController extends Controller
         $this->ensureItemBelongsToMenu($dailyMenu, $item);
 
         $validated = $request->validate($this->itemRules($dailyMenu, $item));
-        $validated['active'] = $request->boolean('active');
         $validated['tenant_id'] = $dailyMenu->tenant_id;
         $validated['daily_menu_id'] = $dailyMenu->id;
 
@@ -181,7 +187,7 @@ class DailyMenuController extends Controller
             ],
             'title' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'active' => ['nullable', 'boolean'],
+            'active' => ['required', 'boolean'],
         ]);
     }
 
@@ -203,7 +209,7 @@ class DailyMenuController extends Controller
             'available_quantity' => ['nullable', 'integer', 'min:0'],
             'price_override' => ['nullable', 'numeric', 'min:0'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
-            'active' => ['nullable', 'boolean'],
+            'active' => ['required', 'boolean'],
         ];
     }
 

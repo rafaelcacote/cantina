@@ -1,123 +1,266 @@
 @php
     $product = $product ?? null;
+
+    $boolValue = function (string $field, bool $default) use ($product): string {
+        return (string) (int) old($field, $product?->{$field} ?? $default);
+    };
+
+    $inputClass = fn (string $field) => 'h-11 w-full rounded-lg border bg-transparent px-4 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden dark:text-white/90 '.($errors->has($field) ? 'border-error-500 dark:border-error-500' : 'border-gray-300 dark:border-gray-700');
 @endphp
 
-<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-    <div>
-        <label for="section_id" class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Seção *</label>
-        <select id="section_id" name="section_id" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+<div class="flex w-full flex-row gap-3">
+    <div class="min-w-0 flex-1">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Seção <span class="text-error-500">*</span>
+        </label>
+        <select id="section_id" name="section_id" required class="{{ $inputClass('section_id') }}">
             <option value="">Selecione</option>
             @foreach ($sections as $section)
-                <option value="{{ $section->id }}" @selected(old('section_id', $product?->section_id) == $section->id)>
+                <option value="{{ $section->id }}" @selected((string) old('section_id', $product?->section_id) === (string) $section->id)>
                     {{ $section->name }}
                 </option>
             @endforeach
         </select>
-        @error('section_id') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+        @error('section_id')
+            <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+        @enderror
     </div>
-
-    <div>
-        <label for="category_id" class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Categoria *</label>
-        <select id="category_id" name="category_id" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+    <div class="min-w-0 flex-1">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Categoria <span class="text-error-500">*</span>
+        </label>
+        <select id="category_id" name="category_id" required class="{{ $inputClass('category_id') }}">
             <option value="">Selecione</option>
             @foreach ($categories as $category)
                 <option
                     value="{{ $category->id }}"
                     data-section-id="{{ $category->section_id }}"
-                    @selected(old('category_id', $product?->category_id) == $category->id)
+                    @selected((string) old('category_id', $product?->category_id) === (string) $category->id)
                 >
                     {{ $category->name }}
                 </option>
             @endforeach
         </select>
-        @error('category_id') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+        @error('category_id')
+            <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+        @enderror
     </div>
+</div>
 
-    <div class="md:col-span-2">
-        <label for="name" class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Nome *</label>
-        <input id="name" name="name" type="text" value="{{ old('name', $product?->name) }}" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-        @error('name') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+<div>
+    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+        Nome <span class="text-error-500">*</span>
+    </label>
+    <input type="text" id="product-name" name="name" value="{{ old('name', $product?->name) }}" required class="{{ $inputClass('name') }}">
+    @error('name')
+        <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+    @enderror
+</div>
+
+<div class="flex w-full flex-row gap-3">
+    <div class="min-w-0 flex-1">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">SKU</label>
+        <input type="text" id="product-sku" name="sku" value="{{ old('sku', $product?->sku) }}" class="{{ $inputClass('sku') }}" autocomplete="off">
+        @if (! $product)
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Sugerido a partir do nome. Você pode alterar.</p>
+        @endif
+        @error('sku')
+            <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+        @enderror
     </div>
-
-    <div>
-        <label for="sku" class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-400">SKU</label>
-        <input id="sku" name="sku" type="text" value="{{ old('sku', $product?->sku) }}" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-        @error('sku') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+    <div class="min-w-0 flex-1">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Código de barras</label>
+        <input type="text" name="barcode" value="{{ old('barcode', $product?->barcode) }}" class="{{ $inputClass('barcode') }}">
+        @error('barcode')
+            <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+        @enderror
     </div>
+</div>
 
-    <div>
-        <label for="barcode" class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Código de barras</label>
-        <input id="barcode" name="barcode" type="text" value="{{ old('barcode', $product?->barcode) }}" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-        @error('barcode') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
-    </div>
+<div>
+    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Descrição</label>
+    <textarea name="description" rows="3"
+              class="w-full rounded-lg border bg-transparent px-4 py-3 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden dark:text-white/90 {{ $errors->has('description') ? 'border-error-500 dark:border-error-500' : 'border-gray-300 dark:border-gray-700' }}">{{ old('description', $product?->description) }}</textarea>
+    @error('description')
+        <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+    @enderror
+</div>
 
-    <div class="md:col-span-2">
-        <label for="description" class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Descrição</label>
-        <textarea id="description" name="description" rows="3" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">{{ old('description', $product?->description) }}</textarea>
-        @error('description') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
-    </div>
-
-    <div>
-        <label for="product_type" class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Tipo do produto *</label>
-        <select id="product_type" name="product_type" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+<div class="flex w-full flex-row gap-3">
+    <div class="min-w-0 flex-1">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Tipo do produto <span class="text-error-500">*</span>
+        </label>
+        <select name="product_type" class="{{ $inputClass('product_type') }}">
             @foreach ($productTypes as $key => $label)
                 <option value="{{ $key }}" @selected(old('product_type', $product?->product_type ?? 'resale') === $key)>{{ $label }}</option>
             @endforeach
         </select>
-        @error('product_type') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+        @error('product_type')
+            <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+        @enderror
     </div>
-
-    <div>
-        <label for="sale_type" class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Tipo de venda *</label>
-        <select id="sale_type" name="sale_type" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+    <div class="min-w-0 flex-1">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Tipo de venda <span class="text-error-500">*</span>
+        </label>
+        <select name="sale_type" class="{{ $inputClass('sale_type') }}">
             @foreach ($saleTypes as $key => $label)
                 <option value="{{ $key }}" @selected(old('sale_type', $product?->sale_type ?? 'unit') === $key)>{{ $label }}</option>
             @endforeach
         </select>
-        @error('sale_type') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
-    </div>
-
-    <div>
-        <label for="price" class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Preço *</label>
-        <input id="price" name="price" type="number" step="0.01" min="0" value="{{ old('price', $product?->price) }}" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-        @error('price') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
-    </div>
-
-    <div>
-        <label for="cost_price" class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Custo</label>
-        <input id="cost_price" name="cost_price" type="number" step="0.01" min="0" value="{{ old('cost_price', $product?->cost_price) }}" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-        @error('cost_price') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
-    </div>
-
-    <div>
-        <label for="minimum_stock_alert" class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Alerta mínimo de estoque *</label>
-        <input id="minimum_stock_alert" name="minimum_stock_alert" type="number" min="0" value="{{ old('minimum_stock_alert', $product?->minimum_stock_alert ?? 5) }}" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-        @error('minimum_stock_alert') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
-    </div>
-
-    <div class="md:col-span-2">
-        <label for="image_url" class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-400">URL da imagem</label>
-        <input id="image_url" name="image_url" type="text" value="{{ old('image_url', $product?->image_url) }}" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-        @error('image_url') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+        @error('sale_type')
+            <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+        @enderror
     </div>
 </div>
 
-<div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-    @php
-        $checkboxes = [
-            'active' => ['label' => 'Ativo', 'default' => true],
-            'visible_in_app' => ['label' => 'Visível no app', 'default' => true],
-            'allow_custom_request' => ['label' => 'Permite pedido customizado', 'default' => false],
-            'requires_preparation' => ['label' => 'Exige preparo', 'default' => false],
-            'stock_controlled' => ['label' => 'Controla estoque', 'default' => true],
-        ];
-    @endphp
-
-    @foreach ($checkboxes as $field => $meta)
-        <label class="inline-flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-800">
-            <input type="checkbox" name="{{ $field }}" value="1" class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-                @checked(old($field, $product?->{$field} ?? $meta['default']))>
-            <span class="text-sm text-gray-700 dark:text-gray-300">{{ $meta['label'] }}</span>
+<div class="flex w-full flex-row gap-3">
+    <div class="min-w-0 flex-1">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Preço <span class="text-error-500">*</span>
         </label>
-    @endforeach
+        <input type="number" name="price" step="0.01" min="0" value="{{ old('price', $product?->price) }}" required class="{{ $inputClass('price') }}">
+        @error('price')
+            <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+        @enderror
+    </div>
+    <div class="min-w-0 flex-1">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Custo</label>
+        <input type="number" name="cost_price" step="0.01" min="0" value="{{ old('cost_price', $product?->cost_price) }}" class="{{ $inputClass('cost_price') }}">
+        @error('cost_price')
+            <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+        @enderror
+    </div>
+    <div class="min-w-0 flex-1">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Alerta mínimo de estoque <span class="text-error-500">*</span>
+        </label>
+        <input type="number" name="minimum_stock_alert" min="0" value="{{ old('minimum_stock_alert', $product?->minimum_stock_alert ?? 5) }}" required class="{{ $inputClass('minimum_stock_alert') }}">
+        @error('minimum_stock_alert')
+            <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+        @enderror
+    </div>
+</div>
+
+<div>
+    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Imagem</label>
+    <div class="flex items-center gap-3">
+        <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+            @if ($product?->imageSrc())
+                <img id="product-image-preview" src="{{ $product->imageSrc() }}" alt="Imagem do produto" class="h-full w-full object-cover">
+            @else
+                <img id="product-image-preview" src="" alt="" class="hidden h-full w-full object-cover">
+                <svg id="product-image-placeholder" class="h-7 w-7 text-gray-400" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M4 7.5A2.5 2.5 0 016.5 5h11A2.5 2.5 0 0120 7.5v9a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 16.5v-9z" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M8.5 13.5l2.2-2.2a1 1 0 011.4 0L15 14.2l1.3-1.3a1 1 0 011.4 0l1.8 1.8M9 9.5h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            @endif
+        </div>
+        <div class="min-w-0 flex-1">
+            <input type="file"
+                   name="image"
+                   id="product-image-input"
+                   accept="image/jpeg,image/png,image/webp,image/gif"
+                   class="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2.5 file:text-sm file:font-medium file:text-brand-600 hover:file:bg-brand-100 dark:text-gray-300 dark:file:bg-brand-500/15 dark:file:text-brand-400 {{ $errors->has('image') ? 'rounded-lg border border-error-500 p-1' : '' }}">
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">JPG, PNG, WEBP ou GIF até 2 MB.</p>
+            @error('image')
+                <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+            @enderror
+        </div>
+    </div>
+</div>
+
+@once
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const input = document.getElementById('product-image-input');
+                const preview = document.getElementById('product-image-preview');
+                const placeholder = document.getElementById('product-image-placeholder');
+
+                if (!input || !preview) {
+                    return;
+                }
+
+                input.addEventListener('change', () => {
+                    const file = input.files?.[0];
+                    if (!file) {
+                        return;
+                    }
+
+                    const url = URL.createObjectURL(file);
+                    preview.src = url;
+                    preview.classList.remove('hidden');
+                    placeholder?.classList.add('hidden');
+                });
+            });
+        </script>
+    @endpush
+@endonce
+
+<div class="flex w-full flex-row gap-3">
+    <div class="min-w-0 flex-1">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Status <span class="text-error-500">*</span>
+        </label>
+        <select name="active" class="{{ $inputClass('active') }}">
+            <option value="1" @selected($boolValue('active', true) === '1')>Ativo</option>
+            <option value="0" @selected($boolValue('active', true) === '0')>Inativo</option>
+        </select>
+        @error('active')
+            <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+        @enderror
+    </div>
+    <div class="min-w-0 flex-1">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Visível no app <span class="text-error-500">*</span>
+        </label>
+        <select name="visible_in_app" class="{{ $inputClass('visible_in_app') }}">
+            <option value="1" @selected($boolValue('visible_in_app', true) === '1')>Sim</option>
+            <option value="0" @selected($boolValue('visible_in_app', true) === '0')>Não</option>
+        </select>
+        @error('visible_in_app')
+            <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+        @enderror
+    </div>
+    <div class="min-w-0 flex-1">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Controla estoque <span class="text-error-500">*</span>
+        </label>
+        <select name="stock_controlled" class="{{ $inputClass('stock_controlled') }}">
+            <option value="1" @selected($boolValue('stock_controlled', true) === '1')>Sim</option>
+            <option value="0" @selected($boolValue('stock_controlled', true) === '0')>Não</option>
+        </select>
+        @error('stock_controlled')
+            <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+        @enderror
+    </div>
+</div>
+
+<div class="flex w-full flex-row gap-3">
+    <div class="min-w-0 flex-1">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Pedido customizado <span class="text-error-500">*</span>
+        </label>
+        <select name="allow_custom_request" class="{{ $inputClass('allow_custom_request') }}">
+            <option value="1" @selected($boolValue('allow_custom_request', false) === '1')>Sim</option>
+            <option value="0" @selected($boolValue('allow_custom_request', false) === '0')>Não</option>
+        </select>
+        @error('allow_custom_request')
+            <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+        @enderror
+    </div>
+    <div class="min-w-0 flex-1">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Exige preparo <span class="text-error-500">*</span>
+        </label>
+        <select name="requires_preparation" class="{{ $inputClass('requires_preparation') }}">
+            <option value="1" @selected($boolValue('requires_preparation', false) === '1')>Sim</option>
+            <option value="0" @selected($boolValue('requires_preparation', false) === '0')>Não</option>
+        </select>
+        @error('requires_preparation')
+            <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
+        @enderror
+    </div>
 </div>

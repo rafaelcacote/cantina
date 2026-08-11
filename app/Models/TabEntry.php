@@ -66,4 +66,9 @@ class TabEntry extends Model
     {
         return $this->hasMany(PurchaseAuthorization::class);
     }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
 }

@@ -44,7 +44,7 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
                     <thead>
                     <tr class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                        <th class="px-4 py-3">Nome</th>
+                        <th class="px-4 py-3">Tenant</th>
                         <th class="px-4 py-3">Slug</th>
                         <th class="px-4 py-3">Email</th>
                         <th class="px-4 py-3">Status</th>
@@ -54,7 +54,18 @@
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                     @forelse($tenants as $tenant)
                         <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">{{ $tenant->name }}</td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+                                        @if ($tenant->logoSrc())
+                                            <img src="{{ $tenant->logoSrc() }}" alt="Logo de {{ $tenant->name }}" class="h-full w-full object-cover">
+                                        @else
+                                            <span class="text-xs font-semibold uppercase text-gray-400">{{ mb_substr($tenant->name, 0, 1) }}</span>
+                                        @endif
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $tenant->name }}</span>
+                                </div>
+                            </td>
                             <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $tenant->slug }}</td>
                             <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $tenant->email ?? '-' }}</td>
                             <td class="px-4 py-3">

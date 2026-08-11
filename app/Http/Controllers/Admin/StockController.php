@@ -12,8 +12,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\View\View;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class StockController extends Controller
 {
@@ -100,7 +100,27 @@ class StockController extends Controller
             'reserved_quantity' => ['required', 'integer', 'min:0'],
         ]);
 
-        $stock->update($validated);
+        $previousQuantity = (int) $stock->quantity;
+        $newQuantity = (int) $validated['quantity'];
+
+        DB::transaction(function () use ($stock, $request, $validated, $previousQuantity, $newQuantity) {
+            $stock->update($validated);
+
+            if ($previousQuantity !== $newQuantity) {
+                StockMovement::create([
+                    'tenant_id' => $stock->tenant_id,
+                    'product_id' => $stock->product_id,
+                    'movement_type' => 'adjustment',
+                    'quantity' => $newQuantity,
+                    'previous_quantity' => $previousQuantity,
+                    'new_quantity' => $newQuantity,
+                    'description' => 'Edição direta do estoque',
+                    'created_by' => $request->user()->id,
+                    'reference_type' => 'direct_edit',
+                    'reference_id' => $stock->id,
+                ]);
+            }
+        });
 
         return redirect()
             ->route('admin.stocks.show', $stock)

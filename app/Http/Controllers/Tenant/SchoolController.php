@@ -39,6 +39,11 @@ class SchoolController extends Controller
     {
         return view('pages.tenant.schools.create', [
             'title' => 'Nova Escola',
+            'addressParts' => [
+                'street' => '',
+                'number' => '',
+                'neighborhood' => '',
+            ],
         ]);
     }
 
@@ -46,16 +51,15 @@ class SchoolController extends Controller
     {
         $tenantId = $request->user()->tenant_id;
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'document' => ['nullable', 'string', 'max:30'],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'address' => ['nullable', 'string', 'max:1000'],
-            'active' => ['required', 'boolean'],
-        ]);
-
+        $validated = $this->validateSchool($request);
         $validated['tenant_id'] = $tenantId;
+        $validated['address'] = School::composeAddress(
+            $validated['street'] ?? null,
+            $validated['number'] ?? null,
+            $validated['neighborhood'] ?? null,
+        );
+
+        unset($validated['street'], $validated['number'], $validated['neighborhood']);
 
         $school = School::query()->create($validated);
 
@@ -71,6 +75,7 @@ class SchoolController extends Controller
         return view('pages.tenant.schools.show', [
             'title' => 'Detalhes da Escola',
             'school' => $school,
+            'addressParts' => $school->addressParts(),
         ]);
     }
 
@@ -81,6 +86,7 @@ class SchoolController extends Controller
         return view('pages.tenant.schools.edit', [
             'title' => 'Editar Escola',
             'school' => $school,
+            'addressParts' => $school->addressParts(),
         ]);
     }
 
@@ -88,20 +94,51 @@ class SchoolController extends Controller
     {
         $this->ensureSchoolBelongsToTenant($request, $school);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'document' => ['nullable', 'string', 'max:30'],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'address' => ['nullable', 'string', 'max:1000'],
-            'active' => ['required', 'boolean'],
-        ]);
+        $validated = $this->validateSchool($request);
+        $validated['address'] = School::composeAddress(
+            $validated['street'] ?? null,
+            $validated['number'] ?? null,
+            $validated['neighborhood'] ?? null,
+        );
+
+        unset($validated['street'], $validated['number'], $validated['neighborhood']);
 
         $school->update($validated);
 
         return redirect()
             ->route('tenant.schools.show', $school)
             ->with('success', 'Escola atualizada com sucesso.');
+    }
+
+    public function destroy(Request $request, School $school): RedirectResponse
+    {
+        $this->ensureSchoolBelongsToTenant($request, $school);
+
+        if ($school->students()->exists() || $school->orders()->exists() || $school->dailyMenus()->exists()) {
+            return back()->withErrors([
+                'delete' => 'Não é possível excluir a escola enquanto houver alunos, pedidos ou cardápios vinculados.',
+            ]);
+        }
+
+        $school->delete();
+
+        return redirect()
+            ->route('tenant.schools.index')
+            ->with('success', 'Escola excluída com sucesso.');
+    }
+
+    private function validateSchool(Request $request): array
+    {
+        return $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'document' => ['nullable', 'string', 'max:30'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'street' => ['nullable', 'string', 'max:255'],
+            'number' => ['nullable', 'string', 'max:30'],
+            'neighborhood' => ['nullable', 'string', 'max:255'],
+            'active' => ['required', 'boolean'],
+        ]);
     }
 
     private function ensureSchoolBelongsToTenant(Request $request, School $school): void

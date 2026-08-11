@@ -188,9 +188,36 @@
   [role='button']:not(:disabled) {
     cursor: pointer;
   }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
   body {
     @apply relative font-normal font-outfit z-1 bg-gray-50;
   }
+}
+
+/*
+  Native <select> popups ignore most Tailwind classes. Without color-scheme
+  (and explicit option colors), a dark page + browser dark theme yields a
+  white control with white/light option text — readable only on hover.
+*/
+.dark select {
+  color-scheme: dark;
+  background-color: var(--color-gray-900);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+select option {
+  background-color: #ffffff;
+  color: var(--color-gray-900);
+}
+
+.dark select option {
+  background-color: var(--color-gray-900);
+  color: #f2f4f7;
 }
 
 @utility menu-item {

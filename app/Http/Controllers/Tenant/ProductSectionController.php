@@ -47,7 +47,6 @@ class ProductSectionController extends Controller
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateSection($request, $tenantId);
         $validated['tenant_id'] = $tenantId;
-        $validated['active'] = $request->boolean('active');
 
         $section = ProductSection::query()->create($validated);
 
@@ -81,12 +80,28 @@ class ProductSectionController extends Controller
         $this->ensureSectionBelongsToTenant($request, $productSection);
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateSection($request, $tenantId, $productSection);
-        $validated['active'] = $request->boolean('active');
         $productSection->update($validated);
 
         return redirect()
             ->route('tenant.product-sections.show', $productSection)
             ->with('success', 'Seção atualizada com sucesso.');
+    }
+
+    public function destroy(Request $request, ProductSection $productSection): RedirectResponse
+    {
+        $this->ensureSectionBelongsToTenant($request, $productSection);
+
+        if ($productSection->categories()->exists() || $productSection->products()->exists()) {
+            return back()->withErrors([
+                'delete' => 'Não é possível excluir a seção enquanto houver categorias ou produtos vinculados.',
+            ]);
+        }
+
+        $productSection->delete();
+
+        return redirect()
+            ->route('tenant.product-sections.index')
+            ->with('success', 'Seção excluída com sucesso.');
     }
 
     private function validateSection(Request $request, int $tenantId, ?ProductSection $section = null): array
@@ -102,7 +117,7 @@ class ProductSectionController extends Controller
                     ->where(fn ($query) => $query->where('tenant_id', $tenantId)),
             ],
             'description' => ['nullable', 'string'],
-            'active' => ['nullable', 'boolean'],
+            'active' => ['required', 'boolean'],
         ]);
     }
 

@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap') layer(base);
+@import 'tailwindcss';
+
+@source '../js/Pages/**/*.vue';
+@source '../js/Layouts/**/*.vue';
+@source '../js/Components/**/*.vue';
+@source '../views/inertia.blade.php';
+
+@theme {
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #14241f;
+  --color-ink-soft: #2a3f38;
+  --color-mist: #eef3f0;
+  --color-foam: #f7faf8;
+  --color-leaf: #3d7a5f;
+  --color-leaf-deep: #2a5a45;
+  --color-zest: #d4e86a;
+  --color-bloom: #f0a07a;
+  --color-line: rgba(20, 36, 31, 0.08);
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body.portal-body {
+    margin: 0;
+    min-height: 100dvh;
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    background: var(--color-foam);
+    text-rendering: optimizeLegibility;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .portal-atmosphere {
+    background:
+      radial-gradient(ellipse 80% 50% at 10% -10%, rgba(61, 122, 95, 0.18), transparent 55%),
+      radial-gradient(ellipse 70% 45% at 100% 0%, rgba(212, 232, 106, 0.28), transparent 50%),
+      radial-gradient(ellipse 60% 40% at 80% 100%, rgba(240, 160, 122, 0.12), transparent 55%),
+      linear-gradient(180deg, #f4f8f5 0%, #eef3f0 45%, #f7faf8 100%);
+  }
+
+  .portal-grain {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  }
+
+  .portal-card {
+    border: 1px solid var(--color-line);
+    background: rgb(255 255 255 / 0.86);
+    backdrop-filter: blur(18px);
+  }
+}
+
+@keyframes fadeRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.p-toast {
+  width: min(24rem, calc(100vw - 2rem));
+}
+
+.p-toast .p-toast-message {
+  box-shadow: 0 16px 40px rgb(20 36 31 / 0.14);
+}
+
+.portal-sheet {
+  width: 100% !important;
+  max-width: 32rem !important;
+  margin: 0 auto !important;
+  border-radius: 1.75rem 1.75rem 0 0 !important;
+}
+
+.portal-sheet-mask {
+  backdrop-filter: blur(6px);
+  background: rgb(20 36 31 / 0.38) !important;
+}
+
+.p-button {
+  font-family: var(--font-sans);
+}
+
+.p-dialog-title,
+.p-dialog-header {
+  font-family: var(--font-display);
+}

@@ -10,6 +10,8 @@ use App\Models\Product;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\OrderService;
+use App\Services\PinService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -96,7 +98,14 @@ class OrderController extends Controller
     public function show(Request $request, Order $order): View
     {
         $this->ensureOrderBelongsToTenant($request, $order);
-        $order->load(['school', 'student', 'parent', 'placedBy', 'items.product']);
+        $order->load([
+            'school',
+            'student',
+            'parent',
+            'placedBy',
+            'items.product',
+            'payments' => fn ($query) => $query->latest(),
+        ]);
 
         return view('pages.tenant.orders.show', [
             'title' => 'Detalhes do Pedido',
@@ -110,6 +119,7 @@ class OrderController extends Controller
             'paymentModes' => $this->paymentModes(),
             'channels' => $this->channels(),
             'types' => $this->types(),
+            'pinAlreadyProvided' => app(PinService::class)->orderAlreadyAuthorizedByPin($order),
         ]);
     }
 
@@ -132,13 +142,25 @@ class OrderController extends Controller
         ]);
     }
 
-    public function update(Request $request, Order $order): RedirectResponse
+    public function update(Request $request, Order $order, OrderService $orderService): RedirectResponse
     {
         $this->ensureOrderBelongsToTenant($request, $order);
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateOrder($request, $tenantId);
         $payload = $this->prepareOrderPayload($validated);
+        $newStatus = $payload['status'] ?? $order->status;
+        unset($payload['status']);
+
         $order->update($payload);
+
+        if ($newStatus !== $order->status) {
+            $orderService->transitionStatus(
+                $order->fresh(),
+                $newStatus,
+                $request->user(),
+                $request->input('student_pin')
+            );
+        }
 
         return redirect()
             ->route('tenant.orders.show', $order)
@@ -213,18 +235,34 @@ class OrderController extends Controller
             ->with('success', 'Item removido do pedido com sucesso.');
     }
 
-    public function updateStatus(Request $request, Order $order): RedirectResponse
+    public function updateStatus(Request $request, Order $order, OrderService $orderService): RedirectResponse
     {
         $this->ensureOrderBelongsToTenant($request, $order);
         $validated = $request->validate([
             'status' => ['required', Rule::in(array_keys($this->statuses()))],
+            'student_pin' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $order->update(['status' => $validated['status']]);
+        $orderService->transitionStatus(
+            $order,
+            $validated['status'],
+            $request->user(),
+            $validated['student_pin'] ?? null
+        );
 
         return redirect()
             ->route('tenant.orders.show', $order)
             ->with('success', 'Status do pedido atualizado com sucesso.');
+    }
+
+    public function destroy(Request $request, Order $order): RedirectResponse
+    {
+        $this->ensureOrderBelongsToTenant($request, $order);
+        $order->delete();
+
+        return redirect()
+            ->route('tenant.orders.index')
+            ->with('success', 'Pedido excluído com sucesso.');
     }
 
     private function validateOrder(Request $request, int $tenantId): array

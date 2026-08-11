@@ -2,25 +2,47 @@
 
 @section('content')
     <div class="mx-auto max-w-3xl space-y-6">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-800 dark:text-white/90">Detalhes da Escola</h1>
+                <h1 class="flex items-center gap-2.5 text-2xl font-semibold text-gray-800 dark:text-white/90">
+                    <span class="inline-flex size-8 items-center justify-center text-brand-500 dark:text-brand-400">
+                        {!! \App\Helpers\MenuHelper::getIconSvg('school') !!}
+                    </span>
+                    Detalhes da Escola
+                </h1>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Visualize os dados da unidade.</p>
             </div>
-            <div class="flex items-center gap-2">
-                <a href="{{ route('tenant.schools.edit', $school) }}"
-                   class="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/5">
-                    Editar
-                </a>
-                <a href="{{ route('tenant.schools.index') }}" class="text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400">
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('tenant.schools.index') }}"
+                   class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-white/5">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                     Voltar
                 </a>
+                <a href="{{ route('tenant.schools.edit', $school) }}"
+                   class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 text-sm font-medium text-white transition-colors hover:bg-brand-600">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M4 20h4l10.5-10.5a2.121 2.121 0 0 0-3-3L5 17v3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M13.5 6.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Editar
+                </a>
+                <form method="POST" action="{{ route('tenant.schools.destroy', $school) }}" onsubmit="return confirm('Excluir este registro?')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit"
+                            class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-error-300 bg-white px-4 text-sm font-medium text-error-600 transition-colors hover:bg-error-50 dark:border-error-500/40 dark:bg-transparent dark:text-error-400 dark:hover:bg-error-500/10">
+                        Excluir
+                    </button>
+                </form>
             </div>
         </div>
 
-        @if (session('success'))
-            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900/40 dark:bg-green-900/20 dark:text-green-300">
-                {{ session('success') }}
+
+        @if ($errors->any())
+            <div class="rounded-xl border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400">
+                {{ $errors->first() }}
             </div>
         @endif
 
@@ -50,9 +72,17 @@
                         </span>
                     </dd>
                 </div>
-                <div class="sm:col-span-2">
-                    <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Endereço</dt>
-                    <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $school->address ?? '-' }}</dd>
+                <div>
+                    <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Logradouro</dt>
+                    <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $addressParts['street'] !== '' ? $addressParts['street'] : '-' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Número</dt>
+                    <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $addressParts['number'] !== '' ? $addressParts['number'] : '-' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Bairro</dt>
+                    <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $addressParts['neighborhood'] !== '' ? $addressParts['neighborhood'] : '-' }}</dd>
                 </div>
             </dl>
         </div>

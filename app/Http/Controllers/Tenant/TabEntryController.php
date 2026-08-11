@@ -10,6 +10,7 @@ use App\Models\TabEntry;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -84,15 +85,19 @@ class TabEntryController extends Controller
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateEntry($request, $tenantId);
         $validated['tenant_id'] = $tenantId;
-        $validated['authorized_by_pin'] = $request->boolean('authorized_by_pin');
         if (empty($validated['created_by'])) {
             $validated['created_by'] = $request->user()->id;
         }
 
-        TabEntry::query()->create($validated);
+        $entry = DB::transaction(function () use ($validated) {
+            $entry = TabEntry::query()->create($validated);
+            $entry->studentTab?->recalculateBalance();
+
+            return $entry;
+        });
 
         return redirect()
-            ->route('tenant.tab-entries.index')
+            ->route('tenant.tab-entries.show', $entry)
             ->with('success', 'Lançamento criado com sucesso.');
     }
 
@@ -126,11 +131,30 @@ class TabEntryController extends Controller
         $validated = $request->validate([
             'status' => ['required', Rule::in(array_keys($this->statuses()))],
         ]);
-        $tabEntry->update($validated);
+
+        DB::transaction(function () use ($tabEntry, $validated) {
+            $tabEntry->update($validated);
+            $tabEntry->studentTab?->recalculateBalance();
+        });
 
         return redirect()
             ->route('tenant.tab-entries.show', $tabEntry)
             ->with('success', 'Status do lançamento atualizado com sucesso.');
+    }
+
+    public function destroy(Request $request, TabEntry $tabEntry): RedirectResponse
+    {
+        $this->ensureEntryBelongsToTenant($request, $tabEntry);
+
+        DB::transaction(function () use ($tabEntry) {
+            $studentTab = $tabEntry->studentTab;
+            $tabEntry->delete();
+            $studentTab?->recalculateBalance();
+        });
+
+        return redirect()
+            ->route('tenant.tab-entries.index')
+            ->with('success', 'Lançamento excluído com sucesso.');
     }
 
     private function validateEntry(Request $request, int $tenantId): array
@@ -157,7 +181,7 @@ class TabEntryController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
             'entry_date' => ['required', 'date'],
             'status' => ['required', Rule::in(array_keys($this->statuses()))],
-            'authorized_by_pin' => ['nullable', 'boolean'],
+            'authorized_by_pin' => ['required', 'boolean'],
             'authorization_method' => ['nullable', Rule::in(array_keys($this->authorizationMethods()))],
             'authorized_at' => ['nullable', 'date'],
             'created_by' => [

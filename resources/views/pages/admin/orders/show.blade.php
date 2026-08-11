@@ -54,9 +54,22 @@
                         @method('PATCH')
                         <select name="status" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
                             @foreach ($statuses as $key => $label)
-                                <option value="{{ $key }}" @selected($order->status === $key)>{{ $label }}</option>
+                                <option value="{{ $key }}" @selected(old('status', $order->status) === $key)>{{ $label }}</option>
                             @endforeach
                         </select>
+                        @error('status')
+                            <p class="text-sm text-error-500">{{ $message }}</p>
+                        @enderror
+                        @if ($order->payment_mode === 'tab')
+                            <div>
+                                <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">PIN do aluno</label>
+                                <input type="password" name="student_pin" maxlength="20" autocomplete="one-time-code"
+                                       class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                                @error('student_pin')
+                                    <p class="mt-1 text-sm text-error-500">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @endif
                         <button type="submit" class="w-full rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600">
                             Alterar status
                         </button>

@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\OrderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -203,13 +204,19 @@ class OrderController extends Controller
             ->with('success', 'Item removido do pedido com sucesso.');
     }
 
-    public function updateStatus(Request $request, Order $order): RedirectResponse
+    public function updateStatus(Request $request, Order $order, OrderService $orderService): RedirectResponse
     {
         $validated = $request->validate([
             'status' => ['required', Rule::in(array_keys($this->statuses()))],
+            'student_pin' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $order->update(['status' => $validated['status']]);
+        $orderService->transitionStatus(
+            $order,
+            $validated['status'],
+            $request->user(),
+            $validated['student_pin'] ?? null
+        );
 
         return redirect()
             ->route('admin.orders.show', $order)

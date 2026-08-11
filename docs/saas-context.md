@@ -3,9 +3,10 @@ Crie o arquivo docs/saas-context.md com o contexto completo do projeto.
 O projeto é um SaaS multi-tenant para gestão de cantinas escolares.
 
 Stack:
-- Laravel para painel web e API
-- PostgreSQL como banco de dados
-- React Native com Expo para app mobile
+- Laravel para painéis operacionais (admin/tenant/operator) em Blade
+- Inertia.js + Vue 3 para painéis parent/student (web responsivo + PWA)
+- PostgreSQL / MySQL como banco de dados
+- API REST (futuro) e React Native + Expo (opcional, se PWA não bastar)
 - O projeto Laravel já possui login e template web instalado
 
 Objetivo do sistema:

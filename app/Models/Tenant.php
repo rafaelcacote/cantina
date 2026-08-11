@@ -16,6 +16,7 @@ class Tenant extends Model
         'document',
         'email',
         'phone',
+        'pix',
         'logo_url',
         'status',
         'trial_ends_at',
@@ -125,6 +126,11 @@ class Tenant extends Model
         return $this->hasMany(WalletTransaction::class);
     }
 
+    public function walletTopups(): HasMany
+    {
+        return $this->hasMany(WalletTopup::class);
+    }
+
     public function studentTabs(): HasMany
     {
         return $this->hasMany(StudentTab::class);
@@ -178,5 +184,18 @@ class Tenant extends Model
     public function auditLogs(): HasMany
     {
         return $this->hasMany(AuditLog::class);
+    }
+
+    public function logoSrc(): ?string
+    {
+        if (! $this->logo_url) {
+            return null;
+        }
+
+        if (str_starts_with($this->logo_url, 'http://') || str_starts_with($this->logo_url, 'https://')) {
+            return $this->logo_url;
+        }
+
+        return '/storage/'.$this->logo_url;
     }
 }

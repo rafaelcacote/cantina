@@ -41,11 +41,37 @@ class StudentParentController extends Controller
     public function create(Request $request): View
     {
         $tenantId = $request->user()->tenant_id;
+        $parentId = $request->integer('parent_id') ?: null;
+        $studentId = $request->integer('student_id') ?: null;
+
+        if ($parentId) {
+            $belongsToTenant = ParentGuardian::query()
+                ->where('tenant_id', $tenantId)
+                ->where('id', $parentId)
+                ->exists();
+
+            if (! $belongsToTenant) {
+                abort(404);
+            }
+        }
+
+        if ($studentId) {
+            $belongsToTenant = Student::query()
+                ->where('tenant_id', $tenantId)
+                ->where('id', $studentId)
+                ->exists();
+
+            if (! $belongsToTenant) {
+                abort(404);
+            }
+        }
 
         return view('pages.tenant.student_parents.create', [
             'title' => 'Novo Vínculo',
             'students' => Student::query()->where('tenant_id', $tenantId)->orderBy('name')->get(['id', 'name']),
             'parents' => ParentGuardian::query()->where('tenant_id', $tenantId)->orderBy('name')->get(['id', 'name']),
+            'selectedParentId' => $parentId,
+            'selectedStudentId' => $studentId,
         ]);
     }
 
@@ -56,6 +82,18 @@ class StudentParentController extends Controller
         $validated['tenant_id'] = $tenantId;
 
         $link = StudentParent::query()->create($validated);
+
+        if ($request->input('_context') === 'student' && ! empty($validated['student_id'])) {
+            return redirect()
+                ->route('tenant.students.index')
+                ->with('success', 'Responsável vinculado com sucesso.');
+        }
+
+        if ($request->input('_context') === 'parent' && ! empty($validated['parent_id'])) {
+            return redirect()
+                ->route('tenant.parents.students', $validated['parent_id'])
+                ->with('success', 'Aluno vinculado com sucesso.');
+        }
 
         return redirect()
             ->route('tenant.student-parents.show', $link)
@@ -96,6 +134,16 @@ class StudentParentController extends Controller
         return redirect()
             ->route('tenant.student-parents.show', $studentParent)
             ->with('success', 'Vínculo atualizado com sucesso.');
+    }
+
+    public function destroy(Request $request, StudentParent $studentParent): RedirectResponse
+    {
+        $this->ensureLinkBelongsToTenant($request, $studentParent);
+        $studentParent->delete();
+
+        return redirect()
+            ->route('tenant.student-parents.index')
+            ->with('success', 'Vínculo excluído com sucesso.');
     }
 
     private function validateStudentParent(Request $request, int $tenantId, ?StudentParent $studentParent = null): array

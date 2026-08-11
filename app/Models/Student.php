@@ -25,6 +25,7 @@ class Student extends Model
         'shift',
         'status',
         'photo_url',
+        'personal_pin',
         'personal_pin_hash',
         'can_buy_on_credit',
         'can_buy_on_tab',
@@ -32,10 +33,16 @@ class Student extends Model
         'snack_access',
     ];
 
+    protected $hidden = [
+        'personal_pin',
+        'personal_pin_hash',
+    ];
+
     protected function casts(): array
     {
         return [
             'birth_date' => 'date',
+            'personal_pin' => 'encrypted',
             'can_buy_on_credit' => 'boolean',
             'can_buy_on_tab' => 'boolean',
             'convenience_access' => 'boolean',
@@ -56,6 +63,15 @@ class Student extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public static function forPortalUser(User $user): ?self
+    {
+        return static::query()
+            ->with(['school', 'wallet'])
+            ->where('tenant_id', (int) $user->tenant_id)
+            ->where('user_id', $user->id)
+            ->first();
     }
 
     public function studentParents(): HasMany
@@ -111,5 +127,18 @@ class Student extends Model
     public function notifications(): HasMany
     {
         return $this->hasMany(Notification::class);
+    }
+
+    public function photoSrc(): ?string
+    {
+        if (! $this->photo_url) {
+            return null;
+        }
+
+        if (str_starts_with($this->photo_url, 'http://') || str_starts_with($this->photo_url, 'https://')) {
+            return $this->photo_url;
+        }
+
+        return '/storage/'.$this->photo_url;
     }
 }

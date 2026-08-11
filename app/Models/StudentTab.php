@@ -43,4 +43,16 @@ class StudentTab extends Model
     {
         return $this->hasMany(TabEntry::class, 'student_tab_id');
     }
+
+    /**
+     * Recalcula o saldo em aberto a partir dos lançamentos com status "open".
+     */
+    public function recalculateBalance(): void
+    {
+        $balance = (float) $this->entries()
+            ->where('status', 'open')
+            ->sum('amount');
+
+        $this->forceFill(['current_balance' => $balance])->save();
+    }
 }

@@ -28,6 +28,24 @@
         </select>
     </div>
     <div>
+        <label for="order_id" class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Pedido</label>
+        <select id="order_id" name="order_id" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+            <option value="">Nenhum</option>
+            @foreach ($orders ?? [] as $order)
+                <option value="{{ $order->id }}" data-tenant-id="{{ $order->tenant_id }}" @selected(old('order_id', $payment?->order_id) == $order->id)>#{{ $order->id }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div>
+        <label for="tab_entry_id" class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Lançamento de fiado</label>
+        <select id="tab_entry_id" name="tab_entry_id" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+            <option value="">Nenhum</option>
+            @foreach ($tabEntries ?? [] as $entry)
+                <option value="{{ $entry->id }}" data-tenant-id="{{ $entry->tenant_id }}" @selected(old('tab_entry_id', $payment?->tab_entry_id) == $entry->id)>#{{ $entry->id }} — R$ {{ number_format((float) $entry->amount, 2, ',', '.') }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div>
         <label for="amount" class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Valor *</label>
         <input id="amount" name="amount" type="number" min="0" step="0.01" value="{{ old('amount', $payment?->amount) }}" class="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-3 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white">
     </div>

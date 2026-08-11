@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +20,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        View::composer('layouts.app', function ($view): void {
+            $tenant = auth()->user()?->tenant;
+
+            $view->with([
+                'brandHasTenant' => (bool) $tenant,
+                'brandLogoSrc' => $tenant?->logoSrc(),
+                'brandName' => $tenant?->name ?? config('app.name', 'Cantina'),
+            ]);
+        });
     }
 }

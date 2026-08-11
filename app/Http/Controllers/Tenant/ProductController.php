@@ -9,6 +9,7 @@ use App\Models\ProductSection;
 use App\Models\Stock;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -81,8 +82,10 @@ class ProductController extends Controller
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateProduct($request, $tenantId);
         $validated['tenant_id'] = $tenantId;
+        $validated['image_url'] = $this->storeImage($request, $tenantId);
+        unset($validated['image']);
 
-        $product = Product::query()->create($this->payload($request, $validated));
+        $product = Product::query()->create($validated);
         $this->ensureStockRecord($product);
 
         return redirect()
@@ -130,12 +133,36 @@ class ProductController extends Controller
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateProduct($request, $tenantId);
 
-        $product->update($this->payload($request, $validated));
+        if ($request->hasFile('image')) {
+            $this->deleteStoredImage($product->image_url);
+            $validated['image_url'] = $this->storeImage($request, $tenantId);
+        }
+
+        unset($validated['image']);
+
+        $product->update($validated);
         $this->ensureStockRecord($product->fresh());
 
         return redirect()
             ->route('tenant.products.show', $product)
             ->with('success', 'Produto atualizado com sucesso.');
+    }
+
+    public function destroy(Request $request, Product $product): RedirectResponse
+    {
+        $this->ensureProductBelongsToTenant($request, $product);
+
+        if ($product->orderItems()->exists()) {
+            return back()->withErrors([
+                'delete' => 'Não é possível excluir o produto enquanto houver itens de pedido vinculados.',
+            ]);
+        }
+
+        $product->delete();
+
+        return redirect()
+            ->route('tenant.products.index')
+            ->with('success', 'Produto excluído com sucesso.');
     }
 
     private function validateProduct(Request $request, int $tenantId): array
@@ -162,25 +189,32 @@ class ProductController extends Controller
             'sale_type' => ['required', Rule::in(array_keys(self::SALE_TYPES))],
             'price' => ['required', 'numeric', 'min:0'],
             'cost_price' => ['nullable', 'numeric', 'min:0'],
-            'image_url' => ['nullable', 'string', 'max:2048'],
-            'active' => ['nullable', 'boolean'],
-            'visible_in_app' => ['nullable', 'boolean'],
-            'allow_custom_request' => ['nullable', 'boolean'],
-            'requires_preparation' => ['nullable', 'boolean'],
-            'stock_controlled' => ['nullable', 'boolean'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp,gif', 'max:2048'],
+            'active' => ['required', 'boolean'],
+            'visible_in_app' => ['required', 'boolean'],
+            'allow_custom_request' => ['required', 'boolean'],
+            'requires_preparation' => ['required', 'boolean'],
+            'stock_controlled' => ['required', 'boolean'],
             'minimum_stock_alert' => ['required', 'integer', 'min:0'],
         ]);
     }
 
-    private function payload(Request $request, array $validated): array
+    private function storeImage(Request $request, int $tenantId): ?string
     {
-        $validated['active'] = $request->boolean('active');
-        $validated['visible_in_app'] = $request->boolean('visible_in_app');
-        $validated['allow_custom_request'] = $request->boolean('allow_custom_request');
-        $validated['requires_preparation'] = $request->boolean('requires_preparation');
-        $validated['stock_controlled'] = $request->boolean('stock_controlled');
+        if (! $request->hasFile('image')) {
+            return null;
+        }
 
-        return $validated;
+        return $request->file('image')->store("products/{$tenantId}", 'public');
+    }
+
+    private function deleteStoredImage(?string $imageUrl): void
+    {
+        if (! $imageUrl || str_starts_with($imageUrl, 'http://') || str_starts_with($imageUrl, 'https://')) {
+            return;
+        }
+
+        Storage::disk('public')->delete($imageUrl);
     }
 
     private function ensureProductBelongsToTenant(Request $request, Product $product): void

@@ -59,7 +59,6 @@ class StudentTabController extends Controller
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateTab($request, $tenantId);
         $validated['tenant_id'] = $tenantId;
-        $validated['active'] = $request->boolean('active');
 
         $tab = StudentTab::query()->create($validated);
 
@@ -106,12 +105,21 @@ class StudentTabController extends Controller
         $this->ensureTabBelongsToTenant($request, $studentTab);
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateTab($request, $tenantId, $studentTab);
-        $validated['active'] = $request->boolean('active');
         $studentTab->update($validated);
 
         return redirect()
             ->route('tenant.student-tabs.show', $studentTab)
             ->with('success', 'Conta de fiado atualizada com sucesso.');
+    }
+
+    public function destroy(Request $request, StudentTab $studentTab): RedirectResponse
+    {
+        $this->ensureTabBelongsToTenant($request, $studentTab);
+        $studentTab->delete();
+
+        return redirect()
+            ->route('tenant.student-tabs.index')
+            ->with('success', 'Conta de fiado excluída com sucesso.');
     }
 
     private function validateTab(Request $request, int $tenantId, ?StudentTab $tab = null): array
@@ -128,7 +136,7 @@ class StudentTabController extends Controller
             'current_balance' => ['required', 'numeric', 'min:0'],
             'billing_cycle_type' => ['required', Rule::in(array_keys($this->cycleTypes()))],
             'due_day' => ['nullable', 'integer', 'min:1', 'max:31'],
-            'active' => ['nullable', 'boolean'],
+            'active' => ['required', 'boolean'],
         ]);
     }
 

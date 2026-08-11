@@ -15,6 +15,8 @@ class Payment extends Model
         'tenant_id',
         'student_id',
         'parent_id',
+        'order_id',
+        'tab_entry_id',
         'amount',
         'payment_method',
         'reference',
@@ -44,6 +46,16 @@ class Payment extends Model
     public function parent(): BelongsTo
     {
         return $this->belongsTo(ParentGuardian::class, 'parent_id');
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function tabEntry(): BelongsTo
+    {
+        return $this->belongsTo(TabEntry::class);
     }
 
     public function creator(): BelongsTo
