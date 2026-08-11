@@ -162,6 +162,8 @@ php artisan route:cache
 php artisan view:cache
 ```
 
+Deploy na Hostinger (homolog `homolog.bablifs.com` e produção `bablifs.com`): [`docs/deploy-hostinger.md`](docs/deploy-hostinger.md).
+
 ## Licença
 
 Este projeto é de uso privado. O template TailAdmin possui [licença própria](https://tailadmin.com/license).
