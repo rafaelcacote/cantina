@@ -94,7 +94,7 @@ Acesse: [http://localhost:8000](http://localhost:8000)
 
 ### Credenciais de teste
 
-Após rodar o seeder (`SaasInitialSeeder`):
+Após rodar o seeder (`PlanSeeder`, `SuperAdminSeeder` e, fora de produção, `DemoTenantSeeder`):
 
 | Perfil | E-mail | Senha | URL inicial |
 |--------|--------|-------|-------------|
@@ -114,7 +114,9 @@ cantina/
 ├── database/
 │   ├── migrations/
 │   └── seeders/
-│       └── SaasInitialSeeder.php
+│       ├── PlanSeeder.php
+│       ├── SuperAdminSeeder.php
+│       └── DemoTenantSeeder.php
 ├── docs/
 │   ├── saas-context.md     # Contexto e regras de negócio
 │   └── roadmap-fases-pendentes.md

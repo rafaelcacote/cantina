@@ -14,7 +14,7 @@ Atualize os checkboxes (`[ ]` → `[x]`) conforme cada item for concluído.
 | Camada | Progresso | Notas |
 |--------|-----------|-------|
 | Banco + Models + Migrations | ✅ ~95% | 32 models, multi-tenant com `tenant_id` |
-| Seeders | ✅ | `SaasInitialSeeder` com tenant demo |
+| Seeders | ✅ | `PlanSeeder` + `SuperAdminSeeder` (produção) e `DemoTenantSeeder` (local) |
 | Painel Super Admin (`/admin`) | ✅ ~95% | CRUD completo dos módulos principais |
 | Painel Tenant Admin (`/tenant`) | ✅ ~95% | CRUD operacional + parental/sistema (Fase 6) |
 | Regras de negócio automáticas | ✅ ~95% | OrderService na confirmação/cancelamento do pedido |
@@ -417,7 +417,7 @@ Fase 10 → Testes + devops (paralelo)
 | Controllers tenant | `app/Http/Controllers/Tenant/` |
 | Controllers admin | `app/Http/Controllers/Admin/` |
 | Regras de negócio | `app/Services/` (`OrderService`, `StockService`, …) |
-| Seeder demo | `database/seeders/SaasInitialSeeder.php` |
+| Seeder demo | `database/seeders/DemoTenantSeeder.php` |
 | Middleware tenant | `app/Http/Middleware/EnsureTenantContext.php`, `EnsureTenantAdmin.php` |
 | Parent/Student (Fase 7) | Inertia + Vue 3 em `/parent` e `/student` (a criar) |
 

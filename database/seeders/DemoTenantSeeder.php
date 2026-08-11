@@ -35,26 +35,11 @@ use App\Models\WalletTransaction;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
-class SaasInitialSeeder extends Seeder
+class DemoTenantSeeder extends Seeder
 {
     public function run(): void
     {
-        $plan = Plan::query()->updateOrCreate(
-            ['slug' => 'basico'],
-            [
-                'name' => 'Plano Basico',
-                'price' => 99.90,
-                'billing_cycle' => 'monthly',
-                'max_students' => 500,
-                'max_users' => 20,
-                'features' => [
-                    'reports' => true,
-                    'mobile_app' => true,
-                    'parental_control' => true,
-                ],
-                'active' => true,
-            ]
-        );
+        $plan = Plan::query()->where('slug', 'basico')->firstOrFail();
 
         $tenant = Tenant::query()->updateOrCreate(
             ['slug' => 'demo-cantina'],
@@ -66,20 +51,6 @@ class SaasInitialSeeder extends Seeder
                 'pix' => '00000000000191',
                 'status' => 'active',
                 'trial_ends_at' => now()->addDays(15),
-            ]
-        );
-
-        User::query()->updateOrCreate(
-            ['email' => 'superadmin@cantina.local'],
-            [
-                'tenant_id' => null,
-                'name' => 'Super Admin',
-                'phone' => '(11) 90000-0001',
-                'cpf' => '00000000000',
-                'user_type' => 'super_admin',
-                'active' => true,
-                'email_verified_at' => now(),
-                'password' => Hash::make('password'),
             ]
         );
 

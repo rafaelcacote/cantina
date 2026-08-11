@@ -12,7 +12,12 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            SaasInitialSeeder::class,
+            PlanSeeder::class,
+            SuperAdminSeeder::class,
         ]);
+
+        if (! app()->isProduction()) {
+            $this->call(DemoTenantSeeder::class);
+        }
     }
 }
