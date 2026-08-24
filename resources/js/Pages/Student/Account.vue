@@ -8,6 +8,8 @@ import Button from 'primevue/button';
 import { formatMoney } from '@/composables/useFormat';
 
 const props = defineProps({
+    portalRole: { type: String, default: 'student' },
+    basePath: { type: String, default: '/student' },
     student: {
         type: Object,
         default: () => ({
@@ -46,7 +48,7 @@ const pinLabel = computed(() => {
 });
 
 const savePin = () => {
-    pinForm.put('/student/account/pin', {
+    pinForm.put(`${props.basePath}/account/pin`, {
         preserveScroll: true,
         onSuccess: () => pinForm.reset(),
     });
@@ -69,7 +71,7 @@ const logout = () => {
 <template>
     <Head title="Conta" />
 
-    <MobileShell role="student">
+    <MobileShell :role="portalRole">
         <section class="space-y-7">
             <div>
                 <h2 class="font-display text-[2rem] font-semibold leading-none tracking-tight text-ink">

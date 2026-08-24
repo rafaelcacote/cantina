@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureOperator;
 use App\Http\Middleware\EnsureParent;
+use App\Http\Middleware\EnsureRequester;
 use App\Http\Middleware\EnsureStudent;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\EnsureTenantAdmin;
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'operator' => EnsureOperator::class,
             'parent' => EnsureParent::class,
             'student' => EnsureStudent::class,
+            'requester' => EnsureRequester::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

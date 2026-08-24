@@ -19,6 +19,7 @@ class UserController extends Controller
         'operator',
         'parent',
         'student',
+        'requester',
     ];
 
     public function index(Request $request): View

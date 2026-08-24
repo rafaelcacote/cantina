@@ -43,6 +43,7 @@ class AuthenticatedSessionController extends Controller
             'operator' => route('operator.dashboard'),
             'parent' => route('parent.dashboard'),
             'student' => route('student.dashboard'),
+            'requester' => route('requester.dashboard'),
             default => route('dashboard'),
         };
 

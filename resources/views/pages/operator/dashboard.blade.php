@@ -29,7 +29,8 @@
         </div>
 
         <div class="flex flex-wrap gap-3">
-            <a href="{{ route('operator.orders.create') }}" class="inline-flex rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600">Novo pedido</a>
+            <a href="{{ route('operator.pos.index') }}" class="inline-flex rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600">Abrir PDV</a>
+            <a href="{{ route('operator.orders.create') }}" class="inline-flex rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium dark:border-gray-700 dark:text-gray-300">Pedido manual</a>
             <a href="{{ route('operator.orders.index') }}" class="inline-flex rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium dark:border-gray-700 dark:text-gray-300">Ver pedidos</a>
             <a href="{{ route('operator.students.index') }}" class="inline-flex rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium dark:border-gray-700 dark:text-gray-300">Consultar aluno</a>
         </div>

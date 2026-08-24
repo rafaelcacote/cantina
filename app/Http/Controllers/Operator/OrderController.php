@@ -24,19 +24,23 @@ class OrderController extends Controller
         $tenantId = $user->tenant_id;
         $schoolId = $user->scopedSchoolId();
         $status = $request->string('status')->toString();
+        $paymentMode = $request->string('payment_mode')->toString();
         $search = trim((string) $request->get('search'));
 
         $orders = Order::query()
-            ->with(['school', 'student'])
+            ->with(['school', 'student', 'parent'])
             ->where('tenant_id', $tenantId)
             ->when($schoolId, fn ($q) => $q->where('school_id', $schoolId))
             ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($paymentMode, fn ($q) => $q->where('payment_mode', $paymentMode))
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($builder) use ($search) {
                     if (ctype_digit($search)) {
                         $builder->orWhere('id', (int) $search);
                     }
-                    $builder->orWhereHas('student', fn ($s) => $s->where('name', 'like', "%{$search}%"));
+                    $builder
+                        ->orWhereHas('student', fn ($s) => $s->where('name', 'like', "%{$search}%"))
+                        ->orWhereHas('parent', fn ($p) => $p->where('name', 'like', "%{$search}%"));
                 });
             })
             ->latest()
@@ -47,7 +51,9 @@ class OrderController extends Controller
             'title' => 'Pedidos',
             'orders' => $orders,
             'statuses' => $this->statuses(),
+            'paymentModes' => $this->paymentModes(),
             'status' => $status,
+            'paymentMode' => $paymentMode,
             'search' => $search,
         ]);
     }
@@ -133,7 +139,14 @@ class OrderController extends Controller
     public function show(Request $request, Order $order): View
     {
         $this->ensureAccessible($request, $order);
-        $order->load(['school', 'student', 'items.product']);
+        $order->load([
+            'school',
+            'student',
+            'parent',
+            'placedBy',
+            'items.product',
+            'payments' => fn ($query) => $query->latest(),
+        ]);
 
         return view('pages.operator.orders.show', [
             'title' => 'Pedido #'.$order->id,
@@ -145,6 +158,8 @@ class OrderController extends Controller
                 ->get(['id', 'name', 'price']),
             'statuses' => $this->statuses(),
             'paymentModes' => $this->paymentModes(),
+            'channels' => $this->channels(),
+            'types' => $this->types(),
             'pinAlreadyProvided' => app(PinService::class)->orderAlreadyAuthorizedByPin($order),
         ]);
     }
@@ -253,6 +268,25 @@ class OrderController extends Controller
             'cash' => 'Dinheiro',
             'pix' => 'Pix',
             'card' => 'Cartão',
+        ];
+    }
+
+    private function channels(): array
+    {
+        return [
+            'app' => 'App',
+            'cashier' => 'Caixa',
+            'web' => 'Web',
+            'totem' => 'Totem',
+        ];
+    }
+
+    private function types(): array
+    {
+        return [
+            'immediate' => 'Imediato',
+            'scheduled' => 'Agendado',
+            'custom' => 'Customizado',
         ];
     }
 }

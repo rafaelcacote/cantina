@@ -9,6 +9,7 @@ use App\Models\TenantInvitation;
 use App\Models\User;
 use App\Rules\ValidCpf;
 use App\Rules\ValidPhone;
+use App\Services\AdultConsumerService;
 use App\Services\ParentRegistrationService;
 use App\Support\Cpf;
 use App\Support\Phone;
@@ -24,7 +25,10 @@ use Inertia\Response;
 
 class InvitationAcceptController extends Controller
 {
-    public function __construct(private readonly ParentRegistrationService $parentRegistration) {}
+    public function __construct(
+        private readonly ParentRegistrationService $parentRegistration,
+        private readonly AdultConsumerService $adultConsumers,
+    ) {}
 
     public function show(string $token): View|Response
     {
@@ -32,6 +36,10 @@ class InvitationAcceptController extends Controller
 
         if ($invitation->type === 'parent_registration') {
             return $this->showParentInvitation($invitation);
+        }
+
+        if ($invitation->type === 'requester_registration') {
+            return $this->showRequesterInvitation($invitation);
         }
 
         $this->ensureUsable($invitation);
@@ -49,6 +57,10 @@ class InvitationAcceptController extends Controller
 
         if ($invitation->type === 'parent_registration') {
             return $this->storeParentInvitation($request, $invitation);
+        }
+
+        if ($invitation->type === 'requester_registration') {
+            return $this->storeRequesterInvitation($request, $invitation);
         }
 
         $this->ensureUsable($invitation);
@@ -199,6 +211,92 @@ class InvitationAcceptController extends Controller
         return redirect()
             ->route('parent.dashboard')
             ->with('success', 'Conta criada. Seus filhos já estão vinculados e aguardam a confirmação da cantina.');
+    }
+
+    private function showRequesterInvitation(TenantInvitation $invitation): Response
+    {
+        $tenant = $invitation->tenant;
+
+        if (! $invitation->isUsable()) {
+            return Inertia::render('Invite/Unavailable', [
+                'tenant' => [
+                    'name' => $tenant?->name ?? 'Cantina',
+                    'logo_url' => $tenant?->logoSrc(),
+                ],
+                'reason' => $invitation->unusableReason(),
+            ]);
+        }
+
+        $schools = School::query()
+            ->where('tenant_id', $invitation->tenant_id)
+            ->where('active', true)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn (School $school) => [
+                'id' => $school->id,
+                'name' => $school->name,
+            ])
+            ->values()
+            ->all();
+
+        return Inertia::render('Invite/AcceptRequester', [
+            'token' => $invitation->token,
+            'tenant' => [
+                'name' => $tenant?->name ?? 'Cantina',
+                'logo_url' => $tenant?->logoSrc(),
+            ],
+            'schools' => $schools,
+            'expiresAt' => $invitation->expires_at?->format('d/m/Y'),
+        ]);
+    }
+
+    private function storeRequesterInvitation(Request $request, TenantInvitation $invitation): RedirectResponse
+    {
+        $this->ensureUsable($invitation);
+
+        $request->merge([
+            'cpf' => Cpf::digits($request->input('cpf')),
+            'phone' => Phone::digits($request->input('phone')) ?: null,
+        ]);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'phone' => ['nullable', 'string', new ValidPhone],
+            'cpf' => [
+                'required',
+                'digits:11',
+                new ValidCpf,
+                Rule::unique('users', 'cpf'),
+            ],
+            'school_id' => [
+                'required',
+                'integer',
+                Rule::exists('schools', 'id')->where(fn ($query) => $query
+                    ->where('tenant_id', $invitation->tenant_id)
+                    ->where('active', true)),
+            ],
+        ], [
+            'cpf.required' => 'Informe o CPF.',
+            'cpf.digits' => 'O CPF deve ter 11 dígitos.',
+            'cpf.unique' => 'Este CPF já está cadastrado. Entre com sua conta ou fale com a cantina.',
+        ]);
+
+        $user = $this->adultConsumers->registerRequesterFromInvitation($invitation, [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => $validated['password'],
+            'phone' => Phone::format($validated['phone'] ?? null),
+            'cpf' => $validated['cpf'],
+            'school_id' => (int) $validated['school_id'],
+        ]);
+
+        Auth::login($user);
+
+        return redirect()
+            ->route('requester.dashboard')
+            ->with('success', 'Conta criada. Você já pode pedir na cantina.');
     }
 
     private function findInvitation(string $token): TenantInvitation

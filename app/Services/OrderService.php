@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\ParentGuardian;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Student;
@@ -77,6 +78,63 @@ class OrderService
         string $paymentMode,
         ?string $notes = null,
         ?string $studentPin = null,
+    ): Order {
+        return $this->placeFromAppPortal(
+            $student,
+            $actor,
+            $requestedItems,
+            $paymentMode,
+            $notes,
+            $studentPin,
+            null,
+        );
+    }
+
+    /**
+     * @param  array<int, array{product_id: int, quantity: int}>  $requestedItems
+     */
+    public function placeFromParentApp(
+        ParentGuardian $parent,
+        Student $student,
+        User $actor,
+        array $requestedItems,
+        string $paymentMode,
+        ?string $notes = null,
+    ): Order {
+        if ((int) $parent->tenant_id !== (int) $student->tenant_id) {
+            throw ValidationException::withMessages([
+                'items' => 'Aluno não encontrado.',
+            ]);
+        }
+
+        if ($student->status !== 'active') {
+            throw ValidationException::withMessages([
+                'items' => 'A cantina ainda precisa confirmar o cadastro deste aluno.',
+            ]);
+        }
+
+        return $this->placeFromAppPortal(
+            $student,
+            $actor,
+            $requestedItems,
+            $paymentMode,
+            $notes,
+            null,
+            $parent,
+        );
+    }
+
+    /**
+     * @param  array<int, array{product_id: int, quantity: int}>  $requestedItems
+     */
+    private function placeFromAppPortal(
+        Student $student,
+        User $actor,
+        array $requestedItems,
+        string $paymentMode,
+        ?string $notes,
+        ?string $studentPin,
+        ?ParentGuardian $parent,
     ): Order {
         if (! $student->school_id) {
             throw ValidationException::withMessages([
@@ -161,14 +219,14 @@ class OrderService
             ]);
         }
 
-        return DB::transaction(function () use ($student, $actor, $lines, $paymentMode, $notes, $studentPin) {
+        return DB::transaction(function () use ($student, $actor, $lines, $paymentMode, $notes, $studentPin, $parent) {
             $total = round(array_sum(array_column($lines, 'total_price')), 2);
 
             $order = Order::query()->create([
                 'tenant_id' => $student->tenant_id,
                 'school_id' => $student->school_id,
                 'student_id' => $student->id,
-                'parent_id' => null,
+                'parent_id' => $parent?->id,
                 'placed_by_user_id' => $actor->id,
                 'order_channel' => 'app',
                 'order_type' => 'immediate',
@@ -202,10 +260,188 @@ class OrderService
 
             if ($paymentMode === 'tab') {
                 $this->tabService->assertAllowedForOrder($order);
-                $this->pinService->assertValidForTabOrder($order, $studentPin, $actor, 'app');
+
+                if ($parent) {
+                    $this->pinService->recordAuthorization($order, null, true, null, $actor, 'app', 'parent');
+                } else {
+                    $this->pinService->assertValidForTabOrder($order, $studentPin, $actor, 'app');
+                }
             }
 
             return $order->fresh(['items.product', 'student']);
+        });
+    }
+
+    /**
+     * Venda rápida no PDV do caixa: cria o pedido com itens e confirma na hora
+     * (baixa estoque + efeitos financeiros).
+     *
+     * - cash / pix / card: aluno opcional (venda de balcão)
+     * - wallet (ficha) / tab (conta): aluno + PIN obrigatórios
+     *
+     * @param  array<int, array{product_id: int, quantity: int}>  $requestedItems
+     */
+    public function placeFromCashierPos(
+        User $actor,
+        int $schoolId,
+        array $requestedItems,
+        string $paymentMode,
+        ?int $studentId = null,
+        ?string $studentPin = null,
+        ?string $notes = null,
+    ): Order {
+        $tenantId = (int) $actor->tenant_id;
+
+        if (! in_array($paymentMode, ['cash', 'pix', 'card', 'wallet', 'tab'], true)) {
+            throw ValidationException::withMessages([
+                'payment_mode' => 'Forma de pagamento inválida.',
+            ]);
+        }
+
+        $needsStudent = in_array($paymentMode, ['wallet', 'tab'], true);
+
+        if ($needsStudent && ! $studentId) {
+            throw ValidationException::withMessages([
+                'student_id' => 'Selecione o aluno para pagar com ficha ou conta.',
+            ]);
+        }
+
+        $student = null;
+        if ($studentId) {
+            $student = Student::query()
+                ->where('tenant_id', $tenantId)
+                ->whereKey($studentId)
+                ->first();
+
+            if (! $student) {
+                throw ValidationException::withMessages([
+                    'student_id' => 'Aluno não encontrado.',
+                ]);
+            }
+
+            if ((int) $student->school_id !== $schoolId) {
+                throw ValidationException::withMessages([
+                    'student_id' => 'O aluno não pertence à escola desta venda.',
+                ]);
+            }
+        }
+
+        if ($needsStudent && $student) {
+            if ($studentPin === null || trim($studentPin) === '') {
+                throw ValidationException::withMessages([
+                    'student_pin' => 'Informe o PIN do aluno.',
+                ]);
+            }
+
+            // Ficha (carteira): PIN validado aqui. Conta (fiado): PinService no commit.
+            if ($paymentMode === 'wallet' && ! $this->pinService->verify($student, trim($studentPin))) {
+                throw ValidationException::withMessages([
+                    'student_pin' => 'PIN do aluno incorreto.',
+                ]);
+            }
+        }
+
+        $productIds = collect($requestedItems)->pluck('product_id')->filter()->map(fn ($id) => (int) $id)->unique()->all();
+
+        $products = Product::query()
+            ->with(['section', 'stock'])
+            ->where('tenant_id', $tenantId)
+            ->whereIn('id', $productIds)
+            ->get()
+            ->keyBy('id');
+
+        $lines = [];
+
+        foreach (array_values($requestedItems) as $index => $row) {
+            $productId = (int) ($row['product_id'] ?? 0);
+            $quantity = (int) ($row['quantity'] ?? 0);
+
+            if ($productId < 1 || $quantity < 1) {
+                throw ValidationException::withMessages([
+                    "items.{$index}" => 'Item inválido.',
+                ]);
+            }
+
+            $product = $products->get($productId);
+
+            if (! $product || ! $product->active) {
+                throw ValidationException::withMessages([
+                    "items.{$index}.product_id" => 'Produto indisponível.',
+                ]);
+            }
+
+            if ($student) {
+                $slug = $product->section?->slug;
+                if ($slug === 'conveniencia' && ! $student->convenience_access) {
+                    throw ValidationException::withMessages([
+                        "items.{$index}.product_id" => 'Aluno sem acesso à seção Conveniência.',
+                    ]);
+                }
+                if ($slug === 'lanches' && ! $student->snack_access) {
+                    throw ValidationException::withMessages([
+                        "items.{$index}.product_id" => 'Aluno sem acesso à seção Lanches.',
+                    ]);
+                }
+            }
+
+            if ($product->stock_controlled) {
+                $available = (int) ($product->stock?->quantity ?? 0);
+                if ($quantity > $available) {
+                    throw ValidationException::withMessages([
+                        "items.{$index}.quantity" => "Estoque insuficiente para {$product->name}.",
+                    ]);
+                }
+            }
+
+            $unitPrice = (float) $product->price;
+
+            $lines[] = [
+                'product' => $product,
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+                'total_price' => round($unitPrice * $quantity, 2),
+            ];
+        }
+
+        if ($lines === []) {
+            throw ValidationException::withMessages([
+                'items' => 'Adicione ao menos um produto.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($actor, $tenantId, $schoolId, $student, $lines, $paymentMode, $notes, $studentPin) {
+            $total = round(array_sum(array_column($lines, 'total_price')), 2);
+
+            $order = Order::query()->create([
+                'tenant_id' => $tenantId,
+                'school_id' => $schoolId,
+                'student_id' => $student?->id,
+                'parent_id' => null,
+                'placed_by_user_id' => $actor->id,
+                'order_channel' => 'cashier',
+                'order_type' => 'immediate',
+                'status' => 'pending',
+                'payment_mode' => $paymentMode,
+                'total_amount' => $total,
+                'discount_amount' => 0,
+                'final_amount' => $total,
+                'notes' => $notes,
+            ]);
+
+            foreach ($lines as $line) {
+                OrderItem::query()->create([
+                    'tenant_id' => $tenantId,
+                    'order_id' => $order->id,
+                    'product_id' => $line['product']->id,
+                    'item_name_snapshot' => $line['product']->name,
+                    'unit_price' => $line['unit_price'],
+                    'quantity' => $line['quantity'],
+                    'total_price' => $line['total_price'],
+                    'item_status' => 'pending',
+                ]);
+            }
+
+            return $this->transitionStatus($order, 'confirmed', $actor, $studentPin);
         });
     }
 

@@ -25,14 +25,6 @@
 
     <div class="divide-y divide-gray-100 dark:divide-gray-800">
         @forelse ($order->items as $item)
-            @php
-                $itemBadge = match ($item->item_status) {
-                    'delivered' => 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-                    'cancelled' => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-                    'pending' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
-                    default => 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300',
-                };
-            @endphp
             <div class="px-5 py-4" x-data="{ editing: false }">
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
@@ -52,14 +44,9 @@
                             @endif
                         </p>
                     </div>
-                    <div class="flex shrink-0 flex-col items-end gap-2">
-                        <p class="text-sm font-semibold tabular-nums text-gray-800 dark:text-white/90">
-                            R$ {{ number_format((float) $item->total_price, 2, ',', '.') }}
-                        </p>
-                        <span class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium {{ $itemBadge }}">
-                            {{ $itemStatuses[$item->item_status] ?? $item->item_status }}
-                        </span>
-                    </div>
+                    <p class="shrink-0 text-sm font-semibold tabular-nums text-gray-800 dark:text-white/90">
+                        R$ {{ number_format((float) $item->total_price, 2, ',', '.') }}
+                    </p>
                 </div>
 
                 <div class="mt-3 flex items-center justify-end gap-1">
@@ -119,14 +106,6 @@
                         <div class="min-w-0 flex-1">
                             <label class="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-300">Preço un.</label>
                             <input type="number" min="0" step="0.01" name="unit_price" value="{{ $item->unit_price }}" class="{{ $itemInput() }}">
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <label class="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-300">Status</label>
-                            <select name="item_status" class="{{ $itemInput() }}">
-                                @foreach ($itemStatuses as $key => $label)
-                                    <option value="{{ $key }}" @selected($item->item_status === $key)>{{ $label }}</option>
-                                @endforeach
-                            </select>
                         </div>
                     </div>
                     <div class="flex flex-row gap-3">
@@ -199,16 +178,6 @@
                 <div class="min-w-0 flex-1">
                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Preço unitário</label>
                     <input type="number" min="0" step="0.01" name="unit_price" value="{{ old('unit_price') }}" placeholder="Padrão do produto" class="{{ $itemInput('unit_price') }}">
-                </div>
-                <div class="min-w-0 flex-1">
-                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Status <span class="text-error-500">*</span>
-                    </label>
-                    <select name="item_status" class="{{ $itemInput('item_status') }}">
-                        @foreach ($itemStatuses as $key => $label)
-                            <option value="{{ $key }}" @selected(old('item_status', 'pending') === $key)>{{ $label }}</option>
-                        @endforeach
-                    </select>
                 </div>
             </div>
 

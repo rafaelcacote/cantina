@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EncryptedPin;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +18,7 @@ class Student extends Model
         'tenant_id',
         'school_id',
         'user_id',
+        'profile_kind',
         'enrollment_number',
         'name',
         'birth_date',
@@ -42,7 +44,7 @@ class Student extends Model
     {
         return [
             'birth_date' => 'date',
-            'personal_pin' => 'encrypted',
+            'personal_pin' => EncryptedPin::class,
             'can_buy_on_credit' => 'boolean',
             'can_buy_on_tab' => 'boolean',
             'convenience_access' => 'boolean',
@@ -63,6 +65,11 @@ class Student extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function isAdult(): bool
+    {
+        return ($this->profile_kind ?? 'student') === 'adult';
     }
 
     public static function forPortalUser(User $user): ?self

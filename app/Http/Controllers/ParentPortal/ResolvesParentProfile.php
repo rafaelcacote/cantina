@@ -71,7 +71,12 @@ trait ResolvesParentProfile
             'tab_balance' => (float) ($student?->tab?->current_balance ?? 0),
             'has_access' => (bool) $student?->user_id,
             'can_buy_on_tab' => (bool) $student?->can_buy_on_tab,
-            'has_pin' => filled($student?->personal_pin) || filled($student?->personal_pin_hash),
+            'has_pin' => $student
+                ? (filled($student->getRawOriginal('personal_pin')) || filled($student->personal_pin_hash))
+                : false,
+            'can_order' => $student
+                && $student->status === 'active'
+                && filled($student->school_id),
         ];
     }
 }

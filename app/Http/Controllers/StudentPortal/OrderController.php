@@ -14,11 +14,28 @@ use Inertia\Response;
 
 class OrderController extends Controller
 {
+    protected function portalRole(): string
+    {
+        return 'student';
+    }
+
+    protected function routeName(string $name): string
+    {
+        return 'student.'.$name;
+    }
+
+    protected function basePath(): string
+    {
+        return '/'.$this->portalRole();
+    }
+
     public function create(Request $request): Response|RedirectResponse
     {
         $student = $this->resolveStudentOrFail($request);
 
         return Inertia::render('Student/Checkout', [
+            'portalRole' => $this->portalRole(),
+            'basePath' => $this->basePath(),
             'walletBalance' => (float) ($student->wallet?->balance ?? 0),
             'paymentOptions' => $this->paymentOptions($student),
         ]);
@@ -47,7 +64,7 @@ class OrderController extends Controller
         );
 
         return redirect()
-            ->route('student.orders.show', $order)
+            ->route($this->routeName('orders.show'), $order)
             ->with('success', 'Pedido enviado. A cantina já recebeu sua solicitação.');
     }
 
@@ -59,6 +76,8 @@ class OrderController extends Controller
         $order->load('items');
 
         return Inertia::render('Student/OrderShow', [
+            'portalRole' => $this->portalRole(),
+            'basePath' => $this->basePath(),
             'order' => [
                 'id' => $order->id,
                 'status' => $order->status,
@@ -90,7 +109,7 @@ class OrderController extends Controller
         $order->update(['status' => 'cancelled']);
 
         return redirect()
-            ->route('student.orders.show', $order)
+            ->route($this->routeName('orders.show'), $order)
             ->with('success', 'Pedido cancelado.');
     }
 
@@ -125,7 +144,7 @@ class OrderController extends Controller
         $student = Student::forPortalUser($request->user());
 
         if (! $student) {
-            abort(403, 'Aluno não vinculado a este usuário.');
+            abort(403, 'Perfil de consumo não vinculado a este usuário.');
         }
 
         return $student;

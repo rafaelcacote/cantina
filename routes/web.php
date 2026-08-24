@@ -32,16 +32,21 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\InvitationAcceptController;
 use App\Http\Controllers\Operator\DashboardController as OperatorDashboardController;
 use App\Http\Controllers\Operator\OrderController as OperatorOrderController;
+use App\Http\Controllers\Operator\PosController as OperatorPosController;
 use App\Http\Controllers\Operator\StudentController as OperatorStudentController;
 use App\Http\Controllers\Operator\WalletController as OperatorWalletController;
 use App\Http\Controllers\ParentPortal\AccountController as ParentAccountController;
 use App\Http\Controllers\ParentPortal\ChildAccessController as ParentChildAccessController;
+use App\Http\Controllers\ParentPortal\ChildControlController as ParentChildControlController;
 use App\Http\Controllers\ParentPortal\ChildController as ParentChildController;
 use App\Http\Controllers\ParentPortal\DashboardController as ParentDashboardController;
 use App\Http\Controllers\ParentPortal\OrderController as ParentOrderController;
+use App\Http\Controllers\ParentPortal\SelfOrderController as ParentSelfOrderController;
 use App\Http\Controllers\ParentPortal\TabController as ParentTabController;
 use App\Http\Controllers\ParentPortal\WalletTopupController as ParentWalletTopupController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RequesterPortal\DashboardController as RequesterDashboardController;
+use App\Http\Controllers\RequesterPortal\OrderController as RequesterOrderController;
 use App\Http\Controllers\StudentInviteAcceptController;
 use App\Http\Controllers\StudentPortal\DashboardController as StudentDashboardController;
 use App\Http\Controllers\StudentPortal\OrderController as StudentOrderController;
@@ -60,6 +65,7 @@ use App\Http\Controllers\Tenant\ProductCategoryController as TenantProductCatego
 use App\Http\Controllers\Tenant\ProductController as TenantProductController;
 use App\Http\Controllers\Tenant\ProductSectionController as TenantProductSectionController;
 use App\Http\Controllers\Tenant\PurchaseAuthorizationController as TenantPurchaseAuthorizationController;
+use App\Http\Controllers\Tenant\RequesterInvitationController as TenantRequesterInvitationController;
 use App\Http\Controllers\Tenant\SchoolController as TenantSchoolController;
 use App\Http\Controllers\Tenant\StockController as TenantStockController;
 use App\Http\Controllers\Tenant\StudentController as TenantStudentController;
@@ -103,6 +109,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function () {
             'operator' => redirect()->route('operator.dashboard'),
             'parent' => redirect()->route('parent.dashboard'),
             'student' => redirect()->route('student.dashboard'),
+            'requester' => redirect()->route('requester.dashboard'),
             default => view('pages.dashboard.ecommerce', ['title' => 'E-commerce Dashboard']),
         };
     })->name('dashboard');
@@ -395,6 +402,11 @@ Route::prefix('tenant')
         Route::post('/parent-invitations', [TenantParentInvitationController::class, 'store'])->name('parent-invitations.store');
         Route::get('/parent-invitations/{parentInvitation}', [TenantParentInvitationController::class, 'show'])->name('parent-invitations.show');
         Route::patch('/parent-invitations/{parentInvitation}/toggle', [TenantParentInvitationController::class, 'toggle'])->name('parent-invitations.toggle');
+        Route::get('/requester-invitations', [TenantRequesterInvitationController::class, 'index'])->name('requester-invitations.index');
+        Route::get('/requester-invitations/create', [TenantRequesterInvitationController::class, 'create'])->name('requester-invitations.create');
+        Route::post('/requester-invitations', [TenantRequesterInvitationController::class, 'store'])->name('requester-invitations.store');
+        Route::get('/requester-invitations/{requesterInvitation}', [TenantRequesterInvitationController::class, 'show'])->name('requester-invitations.show');
+        Route::patch('/requester-invitations/{requesterInvitation}/toggle', [TenantRequesterInvitationController::class, 'toggle'])->name('requester-invitations.toggle');
         Route::get('/parents', [TenantParentController::class, 'index'])->name('parents.index');
         Route::get('/parents/create', [TenantParentController::class, 'create'])->name('parents.create');
         Route::post('/parents', [TenantParentController::class, 'store'])->name('parents.store');
@@ -532,6 +544,9 @@ Route::prefix('operator')
     ->middleware(['auth', 'tenant.context', 'operator'])
     ->group(function () {
         Route::get('/dashboard', [OperatorDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/pos', [OperatorPosController::class, 'index'])->name('pos.index');
+        Route::get('/pos/students', [OperatorPosController::class, 'searchStudents'])->name('pos.students');
+        Route::post('/pos/checkout', [OperatorPosController::class, 'checkout'])->name('pos.checkout');
         Route::get('/orders', [OperatorOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/create', [OperatorOrderController::class, 'create'])->name('orders.create');
         Route::post('/orders', [OperatorOrderController::class, 'store'])->name('orders.store');
@@ -558,12 +573,24 @@ Route::prefix('parent')
         Route::get('/children/{student}/edit', [ParentChildController::class, 'edit'])->name('children.edit');
         Route::put('/children/{student}', [ParentChildController::class, 'update'])->name('children.update');
         Route::get('/children/{student}/access', [ParentChildAccessController::class, 'show'])->name('children.access');
+        Route::get('/children/{student}/controls', [ParentChildControlController::class, 'show'])->name('children.controls');
+        Route::put('/children/{student}/controls', [ParentChildControlController::class, 'update'])->name('children.controls.update');
+        Route::get('/children/{student}/menu', [ParentOrderController::class, 'menu'])->name('children.menu');
+        Route::get('/children/{student}/orders/create', [ParentOrderController::class, 'checkout'])->name('children.orders.create');
+        Route::post('/children/{student}/orders', [ParentOrderController::class, 'store'])->name('children.orders.store');
+        Route::get('/self', [ParentSelfOrderController::class, 'setup'])->name('self.setup');
+        Route::post('/self', [ParentSelfOrderController::class, 'enable'])->name('self.enable');
+        Route::get('/self/menu', [ParentSelfOrderController::class, 'menu'])->name('self.menu');
+        Route::get('/self/orders/create', [ParentSelfOrderController::class, 'checkout'])->name('self.orders.create');
+        Route::post('/self/orders', [ParentSelfOrderController::class, 'store'])->name('self.orders.store');
         Route::get('/children/{student}/topups/create', [ParentWalletTopupController::class, 'create'])->name('topups.create');
         Route::post('/children/{student}/topups', [ParentWalletTopupController::class, 'store'])->name('topups.store');
         Route::get('/topups/{walletTopup}', [ParentWalletTopupController::class, 'show'])->name('topups.show');
         Route::post('/topups/{walletTopup}/receipt', [ParentWalletTopupController::class, 'receipt'])->name('topups.receipt');
         Route::get('/orders', [ParentOrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/create', [ParentOrderController::class, 'create'])->name('orders.create');
         Route::get('/orders/{order}', [ParentOrderController::class, 'show'])->name('orders.show');
+        Route::patch('/orders/{order}/cancel', [ParentOrderController::class, 'cancel'])->name('orders.cancel');
         Route::get('/tab', [ParentTabController::class, 'index'])->name('tab.index');
         Route::get('/account', [ParentAccountController::class, 'index'])->name('account');
     });
@@ -582,4 +609,20 @@ Route::prefix('student')
         Route::patch('/orders/{order}/cancel', [StudentOrderController::class, 'cancel'])->name('orders.cancel');
         Route::get('/account', [StudentDashboardController::class, 'account'])->name('account');
         Route::put('/account/pin', [StudentDashboardController::class, 'updatePin'])->name('account.pin');
+    });
+
+Route::prefix('requester')
+    ->name('requester.')
+    ->middleware(['auth', 'tenant.context', 'requester'])
+    ->group(function () {
+        Route::get('/', [RequesterDashboardController::class, 'index'])->name('dashboard');
+        Route::redirect('/dashboard', '/requester');
+        Route::get('/menu', [RequesterDashboardController::class, 'menu'])->name('menu');
+        Route::get('/orders', [RequesterDashboardController::class, 'orders'])->name('orders');
+        Route::get('/orders/create', [RequesterOrderController::class, 'create'])->name('orders.create');
+        Route::post('/orders', [RequesterOrderController::class, 'store'])->name('orders.store');
+        Route::get('/orders/{order}', [RequesterOrderController::class, 'show'])->name('orders.show');
+        Route::patch('/orders/{order}/cancel', [RequesterOrderController::class, 'cancel'])->name('orders.cancel');
+        Route::get('/account', [RequesterDashboardController::class, 'account'])->name('account');
+        Route::put('/account/pin', [RequesterDashboardController::class, 'updatePin'])->name('account.pin');
     });

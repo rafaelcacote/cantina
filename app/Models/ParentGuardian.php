@@ -17,6 +17,7 @@ class ParentGuardian extends Model
     protected $fillable = [
         'tenant_id',
         'user_id',
+        'self_student_id',
         'name',
         'cpf',
         'phone',
@@ -31,6 +32,11 @@ class ParentGuardian extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function selfStudent(): BelongsTo
+    {
+        return $this->belongsTo(Student::class, 'self_student_id');
     }
 
     public function studentParents(): HasMany
