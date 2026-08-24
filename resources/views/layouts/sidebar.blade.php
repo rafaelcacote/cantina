@@ -67,14 +67,14 @@
             <a href="/"
                class="group flex min-w-0 items-center gap-3 rounded-2xl outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-brand-500/30"
                :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : 'w-full'">
-                <span class="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-[1.25rem] border border-gray-200/80 bg-gradient-to-br from-gray-50 to-white p-0.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] dark:border-gray-700 dark:from-gray-800 dark:to-gray-900">
+                <span class="relative flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-[1.5rem] border border-gray-200/80 bg-gradient-to-br from-gray-50 to-white p-0.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] dark:border-gray-700 dark:from-gray-800 dark:to-gray-900">
                     @if (! empty($brandLogoSrc))
                         <img src="{{ $brandLogoSrc }}"
                              alt=""
                              class="size-full object-contain"
                              aria-hidden="true">
                     @else
-                        <span class="font-outfit text-2xl font-semibold tracking-tight text-brand-600 dark:text-brand-400">
+                        <span class="font-outfit text-3xl font-semibold tracking-tight text-brand-600 dark:text-brand-400">
                             {{ mb_strtoupper(mb_substr($brandName, 0, 1)) }}
                         </span>
                     @endif
@@ -97,12 +97,12 @@
         @else
             <a href="/">
                 <img x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen"
-                    class="dark:hidden" src="/images/logo/logo.svg" alt="{{ $brandName ?? 'Logo' }}" width="150" height="40" />
+                    class="dark:hidden" src="/images/logo/logo.svg" alt="{{ $brandName ?? 'Logo' }}" width="200" height="54" />
                 <img x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen"
-                    class="hidden dark:block" src="/images/logo/logo-dark.svg" alt="{{ $brandName ?? 'Logo' }}" width="150"
-                    height="40" />
+                    class="hidden dark:block" src="/images/logo/logo-dark.svg" alt="{{ $brandName ?? 'Logo' }}" width="200"
+                    height="54" />
                 <img x-show="!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen"
-                    src="/images/logo/logo-icon.svg" alt="{{ $brandName ?? 'Logo' }}" width="32" height="32" />
+                    src="/images/logo/logo-icon.svg" alt="{{ $brandName ?? 'Logo' }}" width="44" height="44" />
             </a>
         @endif
     </div>

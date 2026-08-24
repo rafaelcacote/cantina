@@ -97,7 +97,7 @@ watch(
             <header class="mb-7 flex items-center justify-between gap-3">
                 <div class="flex min-w-0 items-center gap-3">
                     <div
-                        class="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-[0.95rem] border border-white/70 bg-white/80 p-0.5 shadow-[0_8px_24px_rgba(20,36,31,0.07)] backdrop-blur-xl"
+                        class="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-[1.15rem] border border-white/70 bg-white/80 p-0.5 shadow-[0_8px_24px_rgba(20,36,31,0.07)] backdrop-blur-xl"
                         :aria-label="brandName"
                     >
                         <img
@@ -108,7 +108,7 @@ watch(
                         >
                         <span
                             v-else
-                            class="font-display text-lg font-semibold tracking-tight text-ink"
+                            class="font-display text-xl font-semibold tracking-tight text-ink"
                         >
                             {{ brandInitial }}
                         </span>
