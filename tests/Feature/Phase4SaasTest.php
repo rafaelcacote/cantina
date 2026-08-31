@@ -36,6 +36,37 @@ it('permite super admin listar e criar planos', function () {
     expect(Plan::query()->where('slug', 'pro')->exists())->toBeTrue();
 });
 
+it('permite super admin criar tenant_admin com tenant vinculado', function () {
+    $admin = User::factory()->create([
+        'user_type' => 'super_admin',
+        'tenant_id' => null,
+        'password' => Hash::make('password'),
+    ]);
+    $tenant = Tenant::factory()->create();
+
+    $this->actingAs($admin)
+        ->post(route('admin.users.store'), [
+            'name' => 'Gestor Cantina',
+            'email' => 'gestor@teste.local',
+            'phone' => '92999999999',
+            'user_type' => 'tenant_admin',
+            'tenant_id' => $tenant->id,
+            'password' => 'password',
+            'active' => '1',
+        ])
+        ->assertRedirect(route('admin.users.index'));
+
+    $user = User::query()->where('email', 'gestor@teste.local')->first();
+
+    expect($user)->not->toBeNull()
+        ->and($user->tenant_id)->toBe($tenant->id)
+        ->and($user->user_type)->toBe('tenant_admin');
+
+    $this->actingAs($user)
+        ->get(route('tenant.dashboard'))
+        ->assertOk();
+});
+
 it('aceita convite de tenant_admin e cria usuário', function () {
     $tenant = Tenant::factory()->create();
     $invitation = TenantInvitation::factory()->create([

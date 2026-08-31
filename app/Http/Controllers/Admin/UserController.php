@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,14 +26,17 @@ class UserController extends Controller
     public function index(Request $request): View
     {
         $search = trim((string) $request->get('search'));
+        $tenantId = $request->integer('tenant_id') ?: null;
 
         $users = User::query()
+            ->with('tenant')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($subQuery) use ($search) {
                     $subQuery->where('name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%");
                 });
             })
+            ->when($tenantId, fn ($query) => $query->where('tenant_id', $tenantId))
             ->latest()
             ->paginate(10)
             ->withQueryString();
@@ -40,7 +44,9 @@ class UserController extends Controller
         return view('pages.admin.users.index', [
             'title' => 'Usuários',
             'users' => $users,
+            'tenants' => Tenant::query()->orderBy('name')->get(['id', 'name']),
             'search' => $search,
+            'tenantId' => $tenantId,
         ]);
     }
 
@@ -49,24 +55,19 @@ class UserController extends Controller
         return view('pages.admin.users.create', [
             'title' => 'Novo Usuário',
             'userTypes' => self::USER_TYPES,
+            'tenants' => Tenant::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'user_type' => ['required', Rule::in(self::USER_TYPES)],
-            'password' => ['required', 'string', 'min:6'],
-            'active' => ['required', 'boolean'],
-        ]);
+        $validated = $this->validateUser($request);
 
         User::query()->create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
+            'tenant_id' => $validated['tenant_id'],
             'user_type' => $validated['user_type'],
             'active' => (bool) $validated['active'],
             'password' => Hash::make($validated['password']),
@@ -80,6 +81,8 @@ class UserController extends Controller
 
     public function show(User $user): View
     {
+        $user->load('tenant');
+
         return view('pages.admin.users.show', [
             'title' => 'Detalhes do Usuário',
             'user' => $user,
@@ -92,23 +95,19 @@ class UserController extends Controller
             'title' => 'Editar Usuário',
             'user' => $user,
             'userTypes' => self::USER_TYPES,
+            'tenants' => Tenant::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
     public function update(Request $request, User $user): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'user_type' => ['required', Rule::in(self::USER_TYPES)],
-            'active' => ['required', 'boolean'],
-        ]);
+        $validated = $this->validateUser($request, $user);
 
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
+            'tenant_id' => $validated['tenant_id'],
             'user_type' => $validated['user_type'],
             'active' => (bool) $validated['active'],
         ]);
@@ -116,5 +115,37 @@ class UserController extends Controller
         return redirect()
             ->route('admin.users.index')
             ->with('success', 'Usuário atualizado com sucesso.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validateUser(Request $request, ?User $user = null): array
+    {
+        $rules = [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'user_type' => ['required', Rule::in(self::USER_TYPES)],
+            'tenant_id' => [
+                Rule::requiredIf(fn () => $request->input('user_type') !== 'super_admin'),
+                'nullable',
+                'integer',
+                'exists:tenants,id',
+            ],
+            'active' => ['required', 'boolean'],
+        ];
+
+        if (! $user) {
+            $rules['password'] = ['required', 'string', 'min:6'];
+        }
+
+        $validated = $request->validate($rules);
+
+        $validated['tenant_id'] = $validated['user_type'] === 'super_admin'
+            ? null
+            : ($validated['tenant_id'] ?? null);
+
+        return $validated;
     }
 }
