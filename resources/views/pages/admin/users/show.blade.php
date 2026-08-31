@@ -33,6 +33,10 @@
                     <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $user->phone ?? '-' }}</dd>
                 </div>
                 <div>
+                    <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Tenant</dt>
+                    <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $user->tenant?->name ?? '-' }}</dd>
+                </div>
+                <div>
                     <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Tipo de Usuário</dt>
                     <dd class="mt-1">
                         <span class="inline-flex rounded-full bg-brand-100 px-2.5 py-1 text-xs font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">

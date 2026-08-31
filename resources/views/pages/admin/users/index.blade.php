@@ -33,6 +33,13 @@
                            value="{{ $search }}"
                            placeholder="Buscar por nome ou email..."
                            class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden dark:border-gray-700 dark:text-white/90">
+                    <select name="tenant_id"
+                            class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden dark:border-gray-700 dark:text-white/90 sm:max-w-xs">
+                        <option value="">Todos os tenants</option>
+                        @foreach($tenants as $tenant)
+                            <option value="{{ $tenant->id }}" @selected($tenantId === (int) $tenant->id)>{{ $tenant->name }}</option>
+                        @endforeach
+                    </select>
                     <button type="submit"
                             class="inline-flex h-11 items-center justify-center rounded-lg border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/5">
                         Buscar
@@ -46,6 +53,7 @@
                     <tr class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                         <th class="px-4 py-3">Nome</th>
                         <th class="px-4 py-3">Email</th>
+                        <th class="px-4 py-3">Tenant</th>
                         <th class="px-4 py-3">Tipo</th>
                         <th class="px-4 py-3">Status</th>
                         <th class="px-4 py-3 text-right">Ações</th>
@@ -56,6 +64,7 @@
                         <tr>
                             <td class="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">{{ $user->name }}</td>
                             <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $user->email }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $user->tenant?->name ?? '-' }}</td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex rounded-full bg-brand-100 px-2.5 py-1 text-xs font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
                                     {{ $user->user_type }}
@@ -75,7 +84,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                            <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                 Nenhum usuário encontrado.
                             </td>
                         </tr>
