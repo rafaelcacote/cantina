@@ -5,6 +5,8 @@ import { Head, Link } from '@inertiajs/vue3';
 import { formatMoney, orderStatusMeta, timeGreeting } from '@/composables/useFormat';
 
 const props = defineProps({
+    portalRole: { type: String, default: 'student' },
+    basePath: { type: String, default: '/student' },
     greeting: { type: String, required: true },
     student: {
         type: Object,
@@ -24,7 +26,7 @@ const firstName = computed(() => (props.greeting || '').split(' ')[0] || props.g
 <template>
     <Head title="Início" />
 
-    <MobileShell role="student">
+    <MobileShell :role="portalRole">
         <section class="space-y-7">
             <div class="animate-[fadeRise_0.55s_ease-out]">
                 <p class="text-sm font-medium text-ink-soft/55">{{ hello }}</p>
@@ -55,7 +57,7 @@ const firstName = computed(() => (props.greeting || '').split(' ')[0] || props.g
                 </div>
 
                 <Link
-                    href="/student/menu"
+                    :href="`${basePath}/menu`"
                     class="relative mt-5 flex items-center justify-between rounded-[1.25rem] bg-zest px-4 py-3.5 text-ink transition active:scale-[0.99]"
                 >
                     <span>
@@ -76,7 +78,7 @@ const firstName = computed(() => (props.greeting || '').split(' ')[0] || props.g
                     </div>
                     <Link
                         v-if="recentOrders.length"
-                        href="/student/orders"
+                        :href="`${basePath}/orders`"
                         class="flex size-9 items-center justify-center rounded-full border border-line bg-white/70 text-leaf-deep"
                         title="Ver todos"
                     >
@@ -88,7 +90,7 @@ const firstName = computed(() => (props.greeting || '').split(' ')[0] || props.g
                     <Link
                         v-for="order in recentOrders"
                         :key="order.id"
-                        :href="`/student/orders/${order.id}`"
+                        :href="`${basePath}/orders/${order.id}`"
                         class="flex items-center gap-3 border-b border-line py-3.5 last:border-0 transition active:opacity-60"
                     >
                         <span

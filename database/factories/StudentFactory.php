@@ -17,6 +17,7 @@ class StudentFactory extends Factory
             'tenant_id' => Tenant::factory(),
             'school_id' => School::factory(),
             'user_id' => null,
+            'profile_kind' => 'student',
             'enrollment_number' => fake()->optional()->numerify('MAT####'),
             'name' => fake()->name(),
             'birth_date' => fake()->optional()->date(),

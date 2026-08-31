@@ -16,6 +16,7 @@ class TenantInvitationController extends Controller
     public const TYPES = [
         'tenant_admin' => 'Admin do tenant',
         'parent_registration' => 'Cadastro de responsável',
+        'requester_registration' => 'Cadastro de solicitante',
         'operator' => 'Operador',
     ];
 

@@ -16,11 +16,12 @@
         }
 
         .login-panel {
+            position: relative;
             display: flex;
             flex-direction: column;
             width: 100%;
             min-height: 100vh;
-            padding: 1.5rem 1.5rem 1.25rem;
+            padding: 1.5rem 1.5rem 3.5rem;
             background:
                 radial-gradient(ellipse 80% 50% at 0% 0%, rgba(225, 29, 46, 0.05), transparent 55%),
                 linear-gradient(165deg, #ffffff 0%, var(--login-soft) 100%);
@@ -33,11 +34,17 @@
             justify-content: center;
             width: 100%;
             max-width: 26rem;
-            margin: 0 auto;
+            margin: auto;
+        }
+
+        .login-brand {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.75rem;
         }
 
         .login-brand img {
-            height: 5rem;
+            height: 9rem;
             width: auto;
         }
 
@@ -199,7 +206,12 @@
         }
 
         .login-footer {
-            margin-top: 1.5rem;
+            position: absolute;
+            bottom: 1.25rem;
+            left: 1.5rem;
+            right: 1.5rem;
+            margin: 0;
+            text-align: center;
             font-size: 0.875rem;
             color: var(--login-muted);
         }
@@ -239,15 +251,17 @@
                 flex: 0 0 44%;
                 min-height: 100%;
                 height: 100%;
-                padding: 2rem 3.5rem 1.5rem;
-            }
-
-            .login-panel-inner {
-                margin: 0;
+                padding: 2rem 3.5rem 3.75rem;
             }
 
             .login-brand img {
-                height: 5.5rem;
+                height: 10rem;
+            }
+
+            .login-footer {
+                left: 3.5rem;
+                right: 3.5rem;
+                bottom: 1.5rem;
             }
 
             .login-title {
@@ -267,7 +281,13 @@
             .login-panel {
                 width: 42%;
                 flex: 0 0 42%;
-                padding: 2.5rem 4.5rem 1.75rem;
+                padding: 2.5rem 4.5rem 3.75rem;
+            }
+
+            .login-footer {
+                left: 4.5rem;
+                right: 4.5rem;
+                bottom: 1.75rem;
             }
 
             .login-visual {
@@ -279,11 +299,11 @@
 
     <div class="login-screen">
         <section class="login-panel">
-            <header class="login-brand">
-                <img src="{{ asset('images/logo.png') }}" alt="Bablif's" />
-            </header>
-
             <div class="login-panel-inner">
+                <header class="login-brand">
+                    <img src="{{ asset('images/logo.png') }}" alt="Bablif's" />
+                </header>
+
                 <div class="login-copy">
                     <p class="login-eyebrow">Cantina escolar</p>
                     <h1 class="login-title">Bem-vindo de volta</h1>

@@ -9,7 +9,7 @@ const props = defineProps({
     role: {
         type: String,
         required: true,
-        validator: (value) => ['parent', 'student'].includes(value),
+        validator: (value) => ['parent', 'student', 'requester'].includes(value),
     },
 });
 
@@ -23,6 +23,8 @@ const brandLogo = computed(() => tenant.value?.logo_url || null);
 const brandInitial = computed(() => (brandName.value || 'C').charAt(0).toUpperCase());
 const userInitial = computed(() => (user.value?.name || '?').charAt(0).toUpperCase());
 
+const dinerBase = computed(() => (props.role === 'requester' ? '/requester' : '/student'));
+
 const navItems = computed(() => {
     if (props.role === 'parent') {
         return [
@@ -34,22 +36,28 @@ const navItems = computed(() => {
     }
 
     return [
-        { key: 'home', label: 'Início', href: '/student', icon: 'pi pi-home' },
-        { key: 'menu', label: 'Produtos', href: '/student/menu', icon: 'pi pi-th-large' },
-        { key: 'orders', label: 'Pedidos', href: '/student/orders', icon: 'pi pi-shopping-bag' },
-        { key: 'account', label: 'Conta', href: '/student/account', icon: 'pi pi-user' },
+        { key: 'home', label: 'Início', href: dinerBase.value, icon: 'pi pi-home' },
+        { key: 'menu', label: 'Produtos', href: `${dinerBase.value}/menu`, icon: 'pi pi-th-large' },
+        { key: 'orders', label: 'Pedidos', href: `${dinerBase.value}/orders`, icon: 'pi pi-shopping-bag' },
+        { key: 'account', label: 'Conta', href: `${dinerBase.value}/account`, icon: 'pi pi-user' },
     ];
 });
 
 const isActive = (href) => {
     const url = page.url.split('?')[0];
-    if (href === '/parent' || href === '/student') {
+    if (href === '/parent' || href === '/student' || href === '/requester') {
         return url === href || url === `${href}/`;
     }
     return url === href || url.startsWith(`${href}/`);
 };
 
-const accountHref = computed(() => (props.role === 'student' ? '/student/account' : '/parent/account'));
+const accountHref = computed(() => {
+    if (props.role === 'parent') {
+        return '/parent/account';
+    }
+
+    return `${dinerBase.value}/account`;
+});
 
 watch(
     () => page.props.flash,
@@ -89,7 +97,7 @@ watch(
             <header class="mb-7 flex items-center justify-between gap-3">
                 <div class="flex min-w-0 items-center gap-3">
                     <div
-                        class="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-[0.95rem] border border-white/70 bg-white/80 p-0.5 shadow-[0_8px_24px_rgba(20,36,31,0.07)] backdrop-blur-xl"
+                        class="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-[1.15rem] border border-white/70 bg-white/80 p-0.5 shadow-[0_8px_24px_rgba(20,36,31,0.07)] backdrop-blur-xl"
                         :aria-label="brandName"
                     >
                         <img
@@ -100,7 +108,7 @@ watch(
                         >
                         <span
                             v-else
-                            class="font-display text-lg font-semibold tracking-tight text-ink"
+                            class="font-display text-xl font-semibold tracking-tight text-ink"
                         >
                             {{ brandInitial }}
                         </span>

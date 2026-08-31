@@ -28,7 +28,8 @@ class MenuHelper
                         ['name' => 'Escolas', 'path' => '/tenant/schools'],
                         ['name' => 'Alunos', 'path' => '/tenant/students'],
                         ['name' => 'Responsáveis', 'path' => '/tenant/parents'],
-                        ['name' => 'Convites', 'path' => '/tenant/parent-invitations'],
+                        ['name' => 'Convites (responsáveis)', 'path' => '/tenant/parent-invitations'],
+                        ['name' => 'Convites (solicitantes)', 'path' => '/tenant/requester-invitations'],
                         ['name' => 'Seções', 'path' => '/tenant/product-sections'],
                         ['name' => 'Categorias', 'path' => '/tenant/product-categories'],
                         ['name' => 'Produtos', 'path' => '/tenant/products'],
@@ -88,6 +89,11 @@ class MenuHelper
                     'icon' => 'dashboard',
                     'name' => 'Dashboard',
                     'path' => '/operator/dashboard',
+                ],
+                [
+                    'icon' => 'ecommerce',
+                    'name' => 'PDV',
+                    'path' => '/operator/pos',
                 ],
                 [
                     'icon' => 'tables',

@@ -1,9 +1,10 @@
 <script setup>
 import MobileShell from '@/Layouts/MobileShell.vue';
+import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { formatMoney, studentStatusMeta, timeGreeting } from '@/composables/useFormat';
 
-defineProps({
+const props = defineProps({
     greeting: { type: String, required: true },
     children: { type: Array, default: () => [] },
     metrics: {
@@ -16,6 +17,8 @@ defineProps({
         }),
     },
 });
+
+const canPlaceOrder = computed(() => props.children.some((child) => child.can_order));
 </script>
 
 <template>
@@ -29,7 +32,7 @@ defineProps({
                     {{ greeting }}<span class="text-leaf">.</span>
                 </h2>
                 <p class="mt-3 max-w-[34ch] text-sm leading-relaxed text-ink-soft/70">
-                    Acompanhe saldos, fiado, pedidos e o cadastro dos seus filhos.
+                    Acompanhe saldos, faça pedidos e cuide do cadastro dos seus filhos.
                 </p>
             </div>
 
@@ -69,6 +72,33 @@ defineProps({
                     </span>
                 </Link>
             </div>
+
+            <Link
+                v-if="canPlaceOrder"
+                href="/parent/orders/create"
+                class="flex items-center justify-between rounded-[1.35rem] bg-ink px-4 py-4 text-foam shadow-[0_18px_40px_rgba(20,36,31,0.18)]"
+            >
+                <span>
+                    <span class="block text-[11px] font-semibold uppercase tracking-[0.16em] text-zest/80">Cantina</span>
+                    <span class="mt-1 block font-semibold">Fazer um pedido para o filho</span>
+                </span>
+                <span class="flex size-10 items-center justify-center rounded-full bg-zest text-ink">
+                    <i class="pi pi-shopping-bag text-sm" />
+                </span>
+            </Link>
+
+            <Link
+                href="/parent/self"
+                class="flex items-center justify-between rounded-[1.35rem] border border-line bg-white/80 px-4 py-4 text-ink"
+            >
+                <span>
+                    <span class="block text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft/45">Para você</span>
+                    <span class="mt-1 block font-semibold">Pedir para mim</span>
+                </span>
+                <span class="flex size-10 items-center justify-center rounded-full bg-mist text-leaf-deep">
+                    <i class="pi pi-user text-sm" />
+                </span>
+            </Link>
 
             <section class="animate-[fadeRise_0.85s_ease-out]">
                 <div class="mb-3 flex items-end justify-between">

@@ -59,7 +59,8 @@ class PinService
 
     public function hasPin(Student $student): bool
     {
-        return filled($student->personal_pin) || filled($student->personal_pin_hash);
+        return filled($student->getRawOriginal('personal_pin'))
+            || filled($student->personal_pin_hash);
     }
 
     public function isHashed(?string $value): bool
@@ -132,7 +133,7 @@ class PinService
     {
         return $order->purchaseAuthorizations()
             ->where('success', true)
-            ->where('auth_method', 'pin')
+            ->whereIn('auth_method', ['pin', 'parent'])
             ->exists();
     }
 
@@ -149,10 +150,19 @@ class PinService
         $order->loadMissing('student');
 
         // Pedidos do app já exigem PIN no checkout; cobre solicitações anteriores à gravação da autorização.
-        return $order->order_channel === 'app'
+        if (
+            $order->order_channel === 'app'
             && $order->student
             && $order->student->user_id
-            && (int) $order->placed_by_user_id === (int) $order->student->user_id;
+            && (int) $order->placed_by_user_id === (int) $order->student->user_id
+        ) {
+            return true;
+        }
+
+        // Pedido feito pelo responsável no app: o login do pai autoriza o fiado.
+        return $order->order_channel === 'app'
+            && $order->parent_id
+            && $order->placed_by_user_id;
     }
 
     public function recordAuthorization(
@@ -162,6 +172,7 @@ class PinService
         ?string $failureReason = null,
         ?User $actor = null,
         string $deviceType = 'web',
+        string $authMethod = 'pin',
     ): PurchaseAuthorization {
         return PurchaseAuthorization::query()->create([
             'tenant_id' => $order->tenant_id,
@@ -170,7 +181,7 @@ class PinService
             'order_id' => $order->id,
             'tab_entry_id' => $tabEntry?->id,
             'authorization_type' => 'tab_confirmation',
-            'auth_method' => 'pin',
+            'auth_method' => $authMethod,
             'success' => $success,
             'failure_reason' => $failureReason,
             'device_type' => $deviceType,

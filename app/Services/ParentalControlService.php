@@ -4,11 +4,62 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\ParentalControl;
+use App\Models\Product;
+use App\Models\Student;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ParentalControlService
 {
+    public function enabledControl(?Student $student): ?ParentalControl
+    {
+        if (! $student) {
+            return null;
+        }
+
+        return ParentalControl::query()
+            ->with(['blockedProducts', 'allowedCategories'])
+            ->where('tenant_id', $student->tenant_id)
+            ->where('student_id', $student->id)
+            ->where('enabled', true)
+            ->first();
+    }
+
+    public function studentCanSeeProduct(?Student $student, Product $product, ?ParentalControl $control = null): bool
+    {
+        $control ??= $this->enabledControl($student);
+        $slug = $product->section?->slug;
+
+        if ($control) {
+            if ($slug === 'conveniencia' && ! $control->allow_convenience_access) {
+                return false;
+            }
+            if ($slug === 'lanches' && ! $control->allow_snack_access) {
+                return false;
+            }
+            if ($control->blockedProducts->contains('product_id', $product->id)) {
+                return false;
+            }
+            if (in_array($control->control_mode, ['allowlist', 'mixed'], true)) {
+                $allowedCategoryIds = $control->allowedCategories->pluck('category_id')->all();
+                if ($allowedCategoryIds !== [] && ! in_array($product->category_id, $allowedCategoryIds, true)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        if ($slug === 'conveniencia' && $student && ! $student->convenience_access) {
+            return false;
+        }
+        if ($slug === 'lanches' && $student && ! $student->snack_access) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function assertPurchaseAllowed(Order $order): void
     {
         if (! $order->student_id) {

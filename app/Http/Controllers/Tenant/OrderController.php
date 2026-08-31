@@ -115,7 +115,6 @@ class OrderController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'name', 'price']),
             'statuses' => $this->statuses(),
-            'itemStatuses' => $this->itemStatuses(),
             'paymentModes' => $this->paymentModes(),
             'channels' => $this->channels(),
             'types' => $this->types(),
@@ -186,7 +185,7 @@ class OrderController extends Controller
             'total_price' => $totalPrice,
             'observation' => $validated['observation'] ?? null,
             'custom_request_text' => $validated['custom_request_text'] ?? null,
-            'item_status' => $validated['item_status'],
+            'item_status' => 'pending',
         ]);
 
         $this->recalculateTotals($order);
@@ -213,7 +212,6 @@ class OrderController extends Controller
             'total_price' => round($unitPrice * $quantity, 2),
             'observation' => $validated['observation'] ?? null,
             'custom_request_text' => $validated['custom_request_text'] ?? null,
-            'item_status' => $validated['item_status'],
         ]);
 
         $this->recalculateTotals($order);
@@ -311,7 +309,6 @@ class OrderController extends Controller
             'unit_price' => ['nullable', 'numeric', 'min:0'],
             'observation' => ['nullable', 'string'],
             'custom_request_text' => ['nullable', 'string'],
-            'item_status' => ['required', Rule::in(array_keys($this->itemStatuses()))],
         ];
     }
 
@@ -399,17 +396,6 @@ class OrderController extends Controller
         return [
             'pending' => 'Pendente',
             'confirmed' => 'Confirmado',
-            'preparing' => 'Em preparo',
-            'ready' => 'Pronto',
-            'delivered' => 'Entregue',
-            'cancelled' => 'Cancelado',
-        ];
-    }
-
-    private function itemStatuses(): array
-    {
-        return [
-            'pending' => 'Pendente',
             'preparing' => 'Em preparo',
             'ready' => 'Pronto',
             'delivered' => 'Entregue',

@@ -11,6 +11,8 @@ import Textarea from 'primevue/textarea';
 import { formatMoney, paymentLabel } from '@/composables/useFormat';
 
 const props = defineProps({
+    portalRole: { type: String, default: 'student' },
+    basePath: { type: String, default: '/student' },
     walletBalance: { type: Number, default: 0 },
     paymentOptions: { type: Array, default: () => [] },
 });
@@ -52,7 +54,7 @@ onMounted(() => {
     }
 
     if (!cart.value.length) {
-        router.visit('/student/menu');
+        router.visit(`${props.basePath}/menu`);
         return;
     }
 
@@ -71,7 +73,7 @@ const openConfirm = () => {
 };
 
 const submit = () => {
-    form.post('/student/orders', {
+    form.post(`${props.basePath}/orders`, {
         preserveScroll: true,
         onSuccess: () => {
             sessionStorage.removeItem('student-cart');
@@ -86,10 +88,10 @@ const submit = () => {
 <template>
     <Head title="Confirmar pedido" />
 
-    <MobileShell role="student">
+    <MobileShell :role="portalRole">
         <section class="space-y-7 pb-28">
             <div>
-                <BackLink href="/student/menu" label="Cardápio" />
+                <BackLink :href="`${basePath}/menu`" label="Cardápio" />
                 <div class="mt-5 flex items-start justify-between gap-4">
                     <div>
                         <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-soft/40">

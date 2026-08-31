@@ -181,7 +181,7 @@
                                     <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
                                     <path d="M12 15v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                                 </svg>
-                                <p>Pedido solicitado mediante inserção do PIN.</p>
+                                <p>Pedido solicitado {{ $order->parent_id ? 'pelo responsável.' : 'mediante inserção do PIN.' }}</p>
                             </div>
                         @endif
                         <div class="flex flex-col gap-2 sm:flex-row sm:items-start">

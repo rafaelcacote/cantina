@@ -10,6 +10,8 @@ import InputText from 'primevue/inputtext';
 import { formatMoney } from '@/composables/useFormat';
 
 const props = defineProps({
+    portalRole: { type: String, default: 'student' },
+    basePath: { type: String, default: '/student' },
     dateLabel: { type: String, required: true },
     menuTitle: { type: String, default: 'Produtos da cantina' },
     items: { type: Array, default: () => [] },
@@ -109,14 +111,14 @@ const goToCheckout = () => {
 
     sessionStorage.setItem('student-cart', JSON.stringify(cartItems.value));
     reviewOpen.value = false;
-    router.visit('/student/orders/create');
+    router.visit(`${props.basePath}/orders/create`);
 };
 </script>
 
 <template>
     <Head title="Cardápio" />
 
-    <MobileShell role="student">
+    <MobileShell :role="portalRole">
         <section class="space-y-6" :class="cartCount ? 'pb-28' : ''">
             <div>
                 <div class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-soft/45">

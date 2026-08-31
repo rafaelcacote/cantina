@@ -1,15 +1,29 @@
 <script setup>
 import MobileShell from '@/Layouts/MobileShell.vue';
+import ConfirmSheet from '@/Components/portal/ConfirmSheet.vue';
 import BackLink from '@/Components/portal/BackLink.vue';
-import { computed } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
+import Button from 'primevue/button';
 import { formatMoney, orderStatusMeta, paymentLabel } from '@/composables/useFormat';
 
 const props = defineProps({
     order: { type: Object, required: true },
 });
 
+const cancelOpen = ref(false);
+const cancelling = ref(false);
 const status = computed(() => orderStatusMeta(props.order.status));
+
+const cancelOrder = () => {
+    cancelling.value = true;
+    router.patch(`/parent/orders/${props.order.id}/cancel`, {}, {
+        onFinish: () => {
+            cancelling.value = false;
+            cancelOpen.value = false;
+        },
+    });
+};
 </script>
 
 <template>
@@ -63,6 +77,37 @@ const status = computed(() => orderStatusMeta(props.order.status));
                     </li>
                 </ul>
             </article>
+
+            <article v-if="order.notes" class="flex items-start gap-3 rounded-[1.35rem] bg-white/45 px-4 py-3.5 text-sm">
+                <span class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-mist text-leaf-deep">
+                    <i class="pi pi-comment text-xs" />
+                </span>
+                <div class="min-w-0">
+                    <p class="text-[10px] font-medium uppercase tracking-wide text-ink-soft/40">Observação</p>
+                    <p class="mt-0.5 leading-relaxed text-ink-soft/70">{{ order.notes }}</p>
+                </div>
+            </article>
+
+            <Button
+                v-if="order.can_cancel"
+                label="Cancelar solicitação"
+                severity="secondary"
+                outlined
+                class="w-full"
+                icon="pi pi-times"
+                @click="cancelOpen = true"
+            />
         </section>
+
+        <ConfirmSheet
+            v-model:visible="cancelOpen"
+            title="Cancelar este pedido?"
+            message="A cantina deixa de preparar esta solicitação. Só funciona enquanto o pedido ainda está pendente."
+            confirm-label="Cancelar pedido"
+            icon="pi pi-times-circle"
+            danger
+            :loading="cancelling"
+            @confirm="cancelOrder"
+        />
     </MobileShell>
 </template>

@@ -10,6 +10,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\PinService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -178,4 +179,38 @@ it('bloqueia outro responsável de editar o filho', function () {
     $this->actingAs($otherUser)
         ->get(route('parent.children.edit', $student))
         ->assertNotFound();
+});
+
+it('portal do responsavel abre mesmo com pin criptografado invalido', function () {
+    ['user' => $user, 'student' => $student] = parentChildSetup();
+
+    DB::table('students')->where('id', $student->id)->update([
+        'personal_pin' => 'eyJpdiI6ImJhZCIsInZhbHVlIjoiYmFkIiwibWFjIjoiYmFkIiwidGFnIjoiIn0=',
+        'personal_pin_hash' => app(PinService::class)->hash('1234'),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('parent.dashboard'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('Parent/Dashboard'));
+
+    $fresh = $student->fresh();
+
+    expect(app(PinService::class)->hasPin($fresh))->toBeTrue()
+        ->and(app(PinService::class)->reveal($fresh))->toBeNull()
+        ->and(app(PinService::class)->verify($fresh, '1234'))->toBeTrue();
+});
+
+it('ainda le pin legado gravado em texto puro', function () {
+    ['student' => $student] = parentChildSetup();
+
+    DB::table('students')->where('id', $student->id)->update([
+        'personal_pin' => '2580',
+        'personal_pin_hash' => null,
+    ]);
+
+    $fresh = $student->fresh();
+
+    expect(app(PinService::class)->reveal($fresh))->toBe('2580')
+        ->and(app(PinService::class)->verify($fresh, '2580'))->toBeTrue();
 });

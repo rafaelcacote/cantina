@@ -90,11 +90,6 @@
                             <input type="number" min="1" name="quantity" placeholder="Quantidade" value="1" class="w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
                             <input type="number" min="0" step="0.01" name="unit_price" placeholder="Preço unitário" class="w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
                         </div>
-                        <select name="item_status" class="w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-                            @foreach ($itemStatuses as $key => $label)
-                                <option value="{{ $key }}">{{ $label }}</option>
-                            @endforeach
-                        </select>
                         <textarea name="observation" rows="2" placeholder="Observação" class="w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white"></textarea>
                         <textarea name="custom_request_text" rows="2" placeholder="Pedido customizado" class="w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white"></textarea>
                         <button type="submit" class="w-full rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600">

@@ -45,16 +45,41 @@ const classroom = (child) => [child.grade, child.classroom].filter(Boolean).join
                 </p>
                 <div class="relative mt-5 space-y-2">
                     <Link
-                        v-if="canDeposit"
-                        :href="`/parent/children/${child.id}/topups/create`"
+                        v-if="child.can_order"
+                        :href="`/parent/children/${child.id}/menu`"
                         class="flex items-center justify-between rounded-[1.25rem] bg-zest px-4 py-3.5 text-ink"
                     >
                         <span>
-                            <span class="block text-[10px] font-bold uppercase tracking-[0.15em] text-ink/55">Pix</span>
-                            <span class="mt-0.5 block font-semibold">Depositar na carteira</span>
+                            <span class="block text-[10px] font-bold uppercase tracking-[0.15em] text-ink/55">Cantina</span>
+                            <span class="mt-0.5 block font-semibold">Fazer pedido para {{ child.name.split(' ')[0] }}</span>
                         </span>
                         <span class="flex size-9 items-center justify-center rounded-full bg-ink text-zest">
+                            <i class="pi pi-shopping-bag text-xs" />
+                        </span>
+                    </Link>
+                    <Link
+                        v-if="canDeposit"
+                        :href="`/parent/children/${child.id}/topups/create`"
+                        class="flex items-center justify-between rounded-[1.25rem] bg-white/10 px-4 py-3.5 text-foam"
+                    >
+                        <span>
+                            <span class="block text-[10px] font-bold uppercase tracking-[0.15em] text-foam/45">Pix</span>
+                            <span class="mt-0.5 block font-semibold">Depositar na carteira</span>
+                        </span>
+                        <span class="flex size-9 items-center justify-center rounded-full bg-zest text-ink">
                             <i class="pi pi-plus text-xs" />
+                        </span>
+                    </Link>
+                    <Link
+                        :href="`/parent/children/${child.id}/controls`"
+                        class="flex items-center justify-between rounded-[1.25rem] bg-white/10 px-4 py-3.5 text-foam"
+                    >
+                        <span>
+                            <span class="block text-[10px] font-bold uppercase tracking-[0.15em] text-foam/45">Controle parental</span>
+                            <span class="mt-0.5 block font-semibold">Limites, seções e produtos bloqueados</span>
+                        </span>
+                        <span class="flex size-9 items-center justify-center rounded-full bg-zest text-ink">
+                            <i class="pi pi-shield text-xs" />
                         </span>
                     </Link>
                     <Link

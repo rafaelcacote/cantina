@@ -8,6 +8,8 @@ import Button from 'primevue/button';
 import { formatMoney, orderStatusMeta, paymentLabel } from '@/composables/useFormat';
 
 const props = defineProps({
+    portalRole: { type: String, default: 'student' },
+    basePath: { type: String, default: '/student' },
     order: { type: Object, required: true },
 });
 
@@ -17,7 +19,7 @@ const status = computed(() => orderStatusMeta(props.order.status));
 
 const cancelOrder = () => {
     cancelling.value = true;
-    router.patch(`/student/orders/${props.order.id}/cancel`, {}, {
+    router.patch(`${props.basePath}/orders/${props.order.id}/cancel`, {}, {
         onFinish: () => {
             cancelling.value = false;
             cancelOpen.value = false;
@@ -29,10 +31,10 @@ const cancelOrder = () => {
 <template>
     <Head :title="`Pedido #${order.id}`" />
 
-    <MobileShell role="student">
+    <MobileShell :role="portalRole">
         <section class="space-y-6">
             <div>
-                <BackLink href="/student/orders" label="Pedidos" />
+                <BackLink :href="`${basePath}/orders`" label="Pedidos" />
             </div>
 
             <article class="relative overflow-hidden rounded-[1.7rem] bg-ink px-5 py-5 text-foam shadow-[0_20px_48px_rgba(20,36,31,0.22)]">

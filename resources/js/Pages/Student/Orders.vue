@@ -5,6 +5,8 @@ import { Head, Link } from '@inertiajs/vue3';
 import { formatMoney, orderStatusMeta } from '@/composables/useFormat';
 
 const props = defineProps({
+    portalRole: { type: String, default: 'student' },
+    basePath: { type: String, default: '/student' },
     orders: { type: Array, default: () => [] },
 });
 
@@ -46,7 +48,7 @@ const itemLabel = (order) => {
 <template>
     <Head title="Pedidos" />
 
-    <MobileShell role="student">
+    <MobileShell :role="portalRole">
         <section class="space-y-7">
             <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0">
@@ -59,7 +61,7 @@ const itemLabel = (order) => {
                 </div>
 
                 <Link
-                    href="/student/menu"
+                    :href="`${basePath}/menu`"
                     class="mt-1 flex size-11 shrink-0 items-center justify-center rounded-full bg-ink text-zest shadow-[0_12px_24px_rgba(20,36,31,0.18)] transition hover:bg-ink/90 active:scale-[0.96]"
                     title="Novo pedido"
                 >
@@ -76,7 +78,7 @@ const itemLabel = (order) => {
                     <Link
                         v-for="order in openOrders"
                         :key="order.id"
-                        :href="`/student/orders/${order.id}`"
+                        :href="`${basePath}/orders/${order.id}`"
                         class="portal-card relative block overflow-hidden rounded-[1.5rem] pl-1.5 transition active:scale-[0.99]"
                     >
                         <span
@@ -122,7 +124,7 @@ const itemLabel = (order) => {
                     <Link
                         v-for="order in pastOrders"
                         :key="order.id"
-                        :href="`/student/orders/${order.id}`"
+                        :href="`${basePath}/orders/${order.id}`"
                         class="flex items-center gap-3 rounded-[1.25rem] px-1 py-2.5 transition hover:bg-white/50 active:scale-[0.99]"
                     >
                         <span
@@ -160,7 +162,7 @@ const itemLabel = (order) => {
                     Seu primeiro pedido da cantina aparece nesta tela.
                 </p>
                 <Link
-                    href="/student/menu"
+                    :href="`${basePath}/menu`"
                     class="mt-6 inline-flex items-center gap-2 rounded-full bg-ink py-2 pl-2 pr-4 text-sm font-semibold text-foam"
                 >
                     <span class="flex size-7 items-center justify-center rounded-full bg-zest text-ink">

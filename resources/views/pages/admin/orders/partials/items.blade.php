@@ -8,7 +8,6 @@
                     <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Qtd</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Preço unit.</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Total</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Status</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Ações</th>
                 </tr>
             </thead>
@@ -20,10 +19,9 @@
                         <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{{ $item->quantity }}</td>
                         <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">R$ {{ number_format((float) $item->unit_price, 2, ',', '.') }}</td>
                         <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">R$ {{ number_format((float) $item->total_price, 2, ',', '.') }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{{ $itemStatuses[$item->item_status] ?? $item->item_status }}</td>
                         <td class="px-4 py-3 text-sm">
                             <div class="space-y-2">
-                                <form method="POST" action="{{ route('admin.orders.items.update', [$order, $item]) }}" class="grid grid-cols-1 gap-2 lg:grid-cols-6">
+                                <form method="POST" action="{{ route('admin.orders.items.update', [$order, $item]) }}" class="grid grid-cols-1 gap-2 lg:grid-cols-5">
                                     @csrf
                                     @method('PUT')
                                     <select name="product_id" class="w-full rounded-lg border border-gray-300 bg-transparent px-2 py-2 text-xs focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
@@ -33,14 +31,9 @@
                                     </select>
                                     <input type="number" min="1" name="quantity" value="{{ $item->quantity }}" class="w-full rounded-lg border border-gray-300 bg-transparent px-2 py-2 text-xs focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
                                     <input type="number" min="0" step="0.01" name="unit_price" value="{{ $item->unit_price }}" class="w-full rounded-lg border border-gray-300 bg-transparent px-2 py-2 text-xs focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-                                    <select name="item_status" class="w-full rounded-lg border border-gray-300 bg-transparent px-2 py-2 text-xs focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-                                        @foreach ($itemStatuses as $key => $label)
-                                            <option value="{{ $key }}" @selected($item->item_status === $key)>{{ $label }}</option>
-                                        @endforeach
-                                    </select>
                                     <input type="text" name="observation" value="{{ $item->observation }}" placeholder="Observação" class="w-full rounded-lg border border-gray-300 bg-transparent px-2 py-2 text-xs focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
                                     <input type="text" name="custom_request_text" value="{{ $item->custom_request_text }}" placeholder="Customização" class="w-full rounded-lg border border-gray-300 bg-transparent px-2 py-2 text-xs focus:border-brand-500 focus:ring-0 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-                                    <div class="lg:col-span-6">
+                                    <div class="lg:col-span-5">
                                         <button type="submit" class="rounded-md bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600">
                                             Atualizar item
                                         </button>
@@ -58,7 +51,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                        <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                             Nenhum item adicionado ao pedido.
                         </td>
                     </tr>

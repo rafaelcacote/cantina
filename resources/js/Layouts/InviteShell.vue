@@ -16,7 +16,7 @@ defineProps({
 
         <div class="relative mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-6">
             <header class="mb-8 flex items-center gap-3">
-                <div class="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-[0.95rem] border border-white/70 bg-white/80 p-0.5 shadow-[0_8px_24px_rgba(20,36,31,0.07)] backdrop-blur-xl">
+                <div class="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-[1.15rem] border border-white/70 bg-white/80 p-0.5 shadow-[0_8px_24px_rgba(20,36,31,0.07)] backdrop-blur-xl">
                     <img
                         v-if="tenant?.logo_url"
                         :src="tenant.logo_url"
@@ -25,7 +25,7 @@ defineProps({
                     >
                     <span
                         v-else
-                        class="font-display text-lg font-semibold tracking-tight text-ink"
+                        class="font-display text-xl font-semibold tracking-tight text-ink"
                     >
                         {{ (tenant?.name || 'C').charAt(0).toUpperCase() }}
                     </span>
