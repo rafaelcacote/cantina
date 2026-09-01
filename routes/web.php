@@ -440,6 +440,7 @@ Route::prefix('tenant')
         Route::get('/products', [TenantProductController::class, 'index'])->name('products.index');
         Route::get('/products/create', [TenantProductController::class, 'create'])->name('products.create');
         Route::post('/products', [TenantProductController::class, 'store'])->name('products.store');
+        Route::get('/products/{product}/duplicate', [TenantProductController::class, 'duplicate'])->name('products.duplicate');
         Route::get('/products/{product}', [TenantProductController::class, 'show'])->name('products.show');
         Route::get('/products/{product}/edit', [TenantProductController::class, 'edit'])->name('products.edit');
         Route::put('/products/{product}', [TenantProductController::class, 'update'])->name('products.update');

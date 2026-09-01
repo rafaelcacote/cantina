@@ -71,7 +71,7 @@
     <div class="min-w-0 flex-1">
         <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">SKU</label>
         <input type="text" id="product-sku" name="sku" value="{{ old('sku', $product?->sku) }}" class="{{ $inputClass('sku') }}" autocomplete="off">
-        @if (! $product)
+        @if (! $product?->exists)
             <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Sugerido a partir do nome. Você pode alterar.</p>
         @endif
         @error('sku')

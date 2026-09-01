@@ -64,6 +64,36 @@ class ProductController extends Controller
 
         return view('pages.tenant.products.create', [
             'title' => 'Novo Produto',
+            'product' => null,
+            'isDuplicate' => false,
+            'sourceProduct' => null,
+            'sections' => ProductSection::query()
+                ->where('tenant_id', $tenantId)
+                ->orderBy('name')
+                ->get(['id', 'name']),
+            'categories' => ProductCategory::query()
+                ->where('tenant_id', $tenantId)
+                ->orderBy('name')
+                ->get(['id', 'section_id', 'name']),
+            'productTypes' => self::PRODUCT_TYPES,
+            'saleTypes' => self::SALE_TYPES,
+        ]);
+    }
+
+    public function duplicate(Request $request, Product $product): View
+    {
+        $this->ensureProductBelongsToTenant($request, $product);
+        $tenantId = $request->user()->tenant_id;
+
+        $template = $product->replicate();
+        $template->sku = null;
+        $template->barcode = null;
+
+        return view('pages.tenant.products.create', [
+            'title' => 'Duplicar Produto',
+            'product' => $template,
+            'isDuplicate' => true,
+            'sourceProduct' => $product,
             'sections' => ProductSection::query()
                 ->where('tenant_id', $tenantId)
                 ->orderBy('name')
@@ -82,8 +112,8 @@ class ProductController extends Controller
         $tenantId = $request->user()->tenant_id;
         $validated = $this->validateProduct($request, $tenantId);
         $validated['tenant_id'] = $tenantId;
-        $validated['image_url'] = $this->storeImage($request, $tenantId);
-        unset($validated['image']);
+        $validated['image_url'] = $this->resolveImageUrl($request, $tenantId);
+        unset($validated['image'], $validated['source_image_url']);
 
         $product = Product::query()->create($validated);
         $this->ensureStockRecord($product);
@@ -206,6 +236,43 @@ class ProductController extends Controller
         }
 
         return $request->file('image')->store("products/{$tenantId}", 'public');
+    }
+
+    private function resolveImageUrl(Request $request, int $tenantId): ?string
+    {
+        if ($request->hasFile('image')) {
+            return $this->storeImage($request, $tenantId);
+        }
+
+        $sourceImageUrl = trim((string) $request->input('source_image_url'));
+
+        if ($sourceImageUrl === '') {
+            return null;
+        }
+
+        return $this->copyStoredImage($sourceImageUrl, $tenantId);
+    }
+
+    private function copyStoredImage(string $sourcePath, int $tenantId): ?string
+    {
+        if (str_starts_with($sourcePath, 'http://') || str_starts_with($sourcePath, 'https://')) {
+            return $sourcePath;
+        }
+
+        if (! str_starts_with($sourcePath, "products/{$tenantId}/")) {
+            return null;
+        }
+
+        if (! Storage::disk('public')->exists($sourcePath)) {
+            return null;
+        }
+
+        $extension = pathinfo($sourcePath, PATHINFO_EXTENSION) ?: 'jpg';
+        $destination = "products/{$tenantId}/".uniqid('copy_', true).'.'.$extension;
+
+        Storage::disk('public')->copy($sourcePath, $destination);
+
+        return $destination;
     }
 
     private function deleteStoredImage(?string $imageUrl): void
