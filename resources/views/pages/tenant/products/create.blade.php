@@ -8,9 +8,15 @@
                     <span class="inline-flex size-8 items-center justify-center text-brand-500 dark:text-brand-400">
                         {!! \App\Helpers\MenuHelper::getIconSvg('forms') !!}
                     </span>
-                    Novo Produto
+                    {{ $isDuplicate ?? false ? 'Duplicar Produto' : 'Novo Produto' }}
                 </h1>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Cadastre um produto para o seu tenant.</p>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    @if ($isDuplicate ?? false)
+                        Crie um novo produto a partir dos dados de <span class="font-medium text-gray-700 dark:text-gray-300">{{ $sourceProduct->name }}</span>.
+                    @else
+                        Cadastre um produto para o seu tenant.
+                    @endif
+                </p>
             </div>
             <a href="{{ route('tenant.products.index') }}"
                class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-white/5">
@@ -29,9 +35,14 @@
 
         <form method="POST" action="{{ route('tenant.products.store') }}" enctype="multipart/form-data" class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]" novalidate>
             @csrf
+            @if ($isDuplicate ?? false)
+                @if ($product?->image_url)
+                    <input type="hidden" name="source_image_url" value="{{ $product->image_url }}">
+                @endif
+            @endif
             <div class="space-y-5 p-6">
                 @include('pages.tenant.products.partials.form', [
-                    'product' => null,
+                    'product' => $product ?? null,
                     'sections' => $sections,
                     'categories' => $categories,
                     'productTypes' => $productTypes,
