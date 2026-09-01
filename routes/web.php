@@ -120,6 +120,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function () {
     })->name('calendar');
 
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     // form pages
     Route::get('/form-elements', function () {

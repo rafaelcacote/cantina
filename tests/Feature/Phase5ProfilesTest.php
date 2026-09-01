@@ -116,7 +116,59 @@ it('mostra os dados do tenant na pagina de perfil', function () {
         ->assertOk()
         ->assertSee('Cantina Central')
         ->assertSee('cantina@teste.local')
-        ->assertSee('12345678901');
+        ->assertSee('12345678901')
+        ->assertSee('Salvar alterações');
+});
+
+it('permite tenant_admin atualizar dados da cantina no perfil', function () {
+    $tenant = Tenant::factory()->create([
+        'name' => 'Cantina Antiga',
+        'email' => 'antiga@teste.local',
+        'phone' => '92999999999',
+        'pix' => '11111111111',
+    ]);
+    $admin = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'user_type' => 'tenant_admin',
+    ]);
+
+    $this->actingAs($admin)
+        ->put(route('profile.update'), [
+            'name' => 'Cantina Nova',
+            'email' => 'nova@teste.local',
+            'phone' => '92888888888',
+            'pix' => '22222222222',
+        ])
+        ->assertRedirect(route('profile'));
+
+    $tenant->refresh();
+
+    expect($tenant->name)->toBe('Cantina Nova')
+        ->and($tenant->email)->toBe('nova@teste.local')
+        ->and($tenant->phone)->toBe('92888888888')
+        ->and($tenant->pix)->toBe('22222222222');
+});
+
+it('bloqueia manager de editar tenant no perfil', function () {
+    $tenant = Tenant::factory()->create(['name' => 'Cantina Central']);
+    $manager = User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'user_type' => 'manager',
+    ]);
+
+    $this->actingAs($manager)
+        ->get(route('profile'))
+        ->assertOk()
+        ->assertDontSee('Salvar alterações');
+
+    $this->actingAs($manager)
+        ->put(route('profile.update'), [
+            'name' => 'Cantina Alterada',
+            'email' => 'alterada@teste.local',
+        ])
+        ->assertForbidden();
+
+    expect($tenant->fresh()->name)->toBe('Cantina Central');
 });
 
 it('operador acessa dashboard e pedidos', function () {
