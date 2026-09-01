@@ -61,28 +61,66 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
                     <thead>
                     <tr class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                        <th class="px-4 py-3">Nome</th>
+                        <th class="px-4 py-3">Produto</th>
                         <th class="px-4 py-3">Seção</th>
-                        <th class="px-4 py-3">Categoria</th>
+                        <th class="hidden px-4 py-3 lg:table-cell">Categoria</th>
                         <th class="px-4 py-3">Preço</th>
-                        <th class="px-4 py-3">Status</th>
-                        <th class="px-4 py-3">App</th>
+                        <th class="hidden px-4 py-3 sm:table-cell">Status</th>
+                        <th class="hidden px-4 py-3 md:table-cell">App</th>
                         <th class="px-4 py-3 text-right">Ações</th>
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                     @forelse($products as $product)
-                        <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-gray-800 dark:text-white/90">{{ $product->name }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $product->section?->name ?? '-' }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $product->category?->name ?? '-' }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">R$ {{ number_format((float) $product->price, 2, ',', '.') }}</td>
+                        <tr class="transition-colors hover:bg-gray-50/80 dark:hover:bg-white/[0.02]">
                             <td class="px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="relative size-12 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                                        @if ($product->imageSrc())
+                                            <img src="{{ $product->imageSrc() }}"
+                                                 alt=""
+                                                 loading="lazy"
+                                                 class="size-full object-cover">
+                                        @else
+                                            <div class="flex size-full items-center justify-center text-gray-400 dark:text-gray-500">
+                                                <svg class="size-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                    <path d="M4 7.5A2.5 2.5 0 016.5 5h11A2.5 2.5 0 0120 7.5v9a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 16.5v-9z" stroke="currentColor" stroke-width="1.5"/>
+                                                    <path d="M8.5 13.5l2.2-2.2a1 1 0 011.4 0L15 14.2l1.3-1.3a1 1 0 011.4 0l1.8 1.8M9 9.5h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                            </div>
+                                        @endif
+                                        @unless ($product->active)
+                                            <span class="absolute inset-0 bg-gray-900/35" aria-hidden="true"></span>
+                                        @endunless
+                                    </div>
+                                    <div class="min-w-0">
+                                        <a href="{{ route('tenant.products.show', $product) }}"
+                                           class="block truncate text-sm font-medium text-gray-800 transition-colors hover:text-brand-600 dark:text-white/90 dark:hover:text-brand-400">
+                                            {{ $product->name }}
+                                        </a>
+                                        <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                            @if ($product->sku)
+                                                <span class="truncate">{{ $product->sku }}</span>
+                                            @endif
+                                            <span class="lg:hidden">{{ $product->category?->name ?? 'Sem categoria' }}</span>
+                                            <span class="sm:hidden">
+                                                <span class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium {{ $product->active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300' }}">
+                                                    {{ $product->active ? 'Ativo' : 'Inativo' }}
+                                                </span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $product->section?->name ?? '-' }}</td>
+                            <td class="hidden px-4 py-3 text-sm text-gray-600 dark:text-gray-300 lg:table-cell">{{ $product->category?->name ?? '-' }}</td>
+                            <td class="px-4 py-3 text-sm font-medium tabular-nums text-gray-800 dark:text-white/90">R$ {{ number_format((float) $product->price, 2, ',', '.') }}</td>
+                            <td class="hidden px-4 py-3 sm:table-cell">
                                 <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium {{ $product->active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' }}">
                                     {{ $product->active ? 'Ativo' : 'Inativo' }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3">
+                            <td class="hidden px-4 py-3 md:table-cell">
                                 <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium {{ $product->visible_in_app ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' }}">
                                     {{ $product->visible_in_app ? 'Sim' : 'Não' }}
                                 </span>
