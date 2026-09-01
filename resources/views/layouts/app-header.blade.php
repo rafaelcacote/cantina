@@ -52,11 +52,11 @@
             <a href="/" class="xl:hidden min-w-0 flex-1">
                 @if (! empty($brandHasTenant))
                     <span class="flex min-w-0 items-center gap-2.5">
-                        <span class="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-gray-200/80 bg-gradient-to-br from-gray-50 to-white p-0.5 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900">
+                        <span class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-200/80 bg-gradient-to-br from-gray-50 to-white p-1 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900">
                             @if (! empty($brandLogoSrc))
-                                <img src="{{ $brandLogoSrc }}" alt="" class="size-full object-contain" aria-hidden="true">
+                                <img src="{{ $brandLogoSrc }}" alt="" class="max-h-full max-w-full object-contain" aria-hidden="true">
                             @else
-                                <span class="font-outfit text-xl font-semibold text-brand-600 dark:text-brand-400">
+                                <span class="font-outfit text-lg font-semibold text-brand-600 dark:text-brand-400">
                                     {{ mb_strtoupper(mb_substr($brandName, 0, 1)) }}
                                 </span>
                             @endif
