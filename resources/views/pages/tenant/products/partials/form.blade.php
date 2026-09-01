@@ -6,6 +6,16 @@
     };
 
     $inputClass = fn (string $field) => 'h-11 w-full rounded-lg border bg-transparent px-4 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden dark:text-white/90 '.($errors->has($field) ? 'border-error-500 dark:border-error-500' : 'border-gray-300 dark:border-gray-700');
+
+    $moneyHiddenValue = function (string $field) use ($product): string {
+        $value = old($field, $product?->{$field});
+
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        return number_format((float) $value, 2, '.', '');
+    };
 @endphp
 
 <div class="flex w-full flex-row gap-3">
@@ -117,17 +127,42 @@
 
 <div class="flex w-full flex-row gap-3">
     <div class="min-w-0 flex-1">
-        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label for="product-price-display" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
             Preço <span class="text-error-500">*</span>
         </label>
-        <input type="number" name="price" step="0.01" min="0" value="{{ old('price', $product?->price) }}" required class="{{ $inputClass('price') }}">
+        <div class="relative">
+            <span class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-sm font-medium text-gray-500 dark:text-gray-400">R$</span>
+            <input
+                type="text"
+                id="product-price-display"
+                data-money-input="price"
+                inputmode="numeric"
+                autocomplete="off"
+                placeholder="0,00"
+                required
+                class="{{ $inputClass('price') }} pl-12 tabular-nums"
+            >
+            <input type="hidden" name="price" value="{{ $moneyHiddenValue('price') }}">
+        </div>
         @error('price')
             <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
         @enderror
     </div>
     <div class="min-w-0 flex-1">
-        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Custo</label>
-        <input type="number" name="cost_price" step="0.01" min="0" value="{{ old('cost_price', $product?->cost_price) }}" class="{{ $inputClass('cost_price') }}">
+        <label for="product-cost-display" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Custo</label>
+        <div class="relative">
+            <span class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-sm font-medium text-gray-500 dark:text-gray-400">R$</span>
+            <input
+                type="text"
+                id="product-cost-display"
+                data-money-input="cost_price"
+                inputmode="numeric"
+                autocomplete="off"
+                placeholder="0,00"
+                class="{{ $inputClass('cost_price') }} pl-12 tabular-nums"
+            >
+            <input type="hidden" name="cost_price" value="{{ $moneyHiddenValue('cost_price') }}">
+        </div>
         @error('cost_price')
             <p class="mt-1.5 text-sm text-error-500">{{ $message }}</p>
         @enderror

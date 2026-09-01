@@ -1,4 +1,5 @@
 import './bootstrap';
+import { initMoneyInputs } from './composables/useMoney';
 import Alpine from 'alpinejs';
 import ApexCharts from 'apexcharts';
 
@@ -19,6 +20,8 @@ Alpine.start();
 
 // Initialize components on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
+    initMoneyInputs();
+
     // Map imports
     if (document.querySelector('#mapOne')) {
         import('./components/map').then(module => module.initMap());

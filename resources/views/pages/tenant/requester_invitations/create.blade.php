@@ -5,7 +5,7 @@
         $inputClass = fn (string $field) => 'h-11 w-full rounded-lg border bg-transparent px-4 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden dark:text-white/90 '.($errors->has($field) ? 'border-error-500 dark:border-error-500' : 'border-gray-300 dark:border-gray-700');
     @endphp
 
-    <div class="mx-auto max-w-3xl space-y-6">
+    <div class="space-y-6">
         <div class="flex items-center justify-between">
             <h1 class="flex items-center gap-2.5 text-2xl font-semibold text-gray-800 dark:text-white/90">
                 <span class="inline-flex size-8 items-center justify-center text-brand-500 dark:text-brand-400">
