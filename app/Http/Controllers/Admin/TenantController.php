@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\HandlesTenantLogo;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class TenantController extends Controller
 {
+    use HandlesTenantLogo;
     public function index(Request $request): View
     {
         $search = trim((string) $request->get('search'));
@@ -45,7 +46,7 @@ class TenantController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validateTenant($request);
-        $validated['logo_url'] = $this->storeLogo($request);
+        $validated['logo_url'] = $this->storeTenantLogo($request);
         unset($validated['logo']);
 
         Tenant::query()->create($validated);
@@ -76,8 +77,8 @@ class TenantController extends Controller
         $validated = $this->validateTenant($request, $tenant);
 
         if ($request->hasFile('logo')) {
-            $this->deleteStoredLogo($tenant->logo_url);
-            $validated['logo_url'] = $this->storeLogo($request);
+            $this->deleteStoredTenantLogo($tenant->logo_url);
+            $validated['logo_url'] = $this->storeTenantLogo($request);
         }
 
         unset($validated['logo']);
@@ -106,23 +107,5 @@ class TenantController extends Controller
             'status' => ['required', Rule::in(['active', 'inactive'])],
             'logo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp,gif', 'max:2048'],
         ]);
-    }
-
-    private function storeLogo(Request $request): ?string
-    {
-        if (! $request->hasFile('logo')) {
-            return null;
-        }
-
-        return $request->file('logo')->store('tenants/logos', 'public');
-    }
-
-    private function deleteStoredLogo(?string $logoUrl): void
-    {
-        if (! $logoUrl || str_starts_with($logoUrl, 'http://') || str_starts_with($logoUrl, 'https://')) {
-            return;
-        }
-
-        Storage::disk('public')->delete($logoUrl);
     }
 }

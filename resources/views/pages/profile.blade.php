@@ -1,14 +1,3 @@
-@php
-    use App\Support\Phone;
-
-    $statusLabels = [
-        'active' => 'ativo',
-        'inactive' => 'inativo',
-        'suspended' => 'suspenso',
-        'trial' => 'trial',
-    ];
-@endphp
-
 @extends('layouts.app')
 
 @section('content')
@@ -20,72 +9,33 @@
                 </span>
                 Perfil
             </h1>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Dados da cantina vinculada à sua conta.</p>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                @if ($canEditTenant)
+                    Gerencie os dados operacionais da sua cantina.
+                @else
+                    Dados da cantina vinculada à sua conta.
+                @endif
+            </p>
         </div>
 
-        @if ($tenant)
-            <div class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
-                <dl class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <div class="sm:col-span-2">
-                        <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Logo</dt>
-                        <dd class="mt-2">
-                            @if ($tenant->logoSrc())
-                                <img src="{{ $tenant->logoSrc() }}"
-                                     alt="Logo de {{ $tenant->name }}"
-                                     class="h-20 w-20 rounded-lg border border-gray-200 object-cover dark:border-gray-700">
-                            @else
-                                <span class="inline-flex size-20 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 font-outfit text-2xl font-semibold text-brand-600 dark:border-gray-700 dark:bg-gray-800 dark:text-brand-400">
-                                    {{ mb_strtoupper(mb_substr($tenant->name, 0, 1)) }}
-                                </span>
-                            @endif
-                        </dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Nome</dt>
-                        <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $tenant->name }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Slug</dt>
-                        <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $tenant->slug }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Documento</dt>
-                        <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $tenant->document ?: '-' }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Email</dt>
-                        <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $tenant->email ?: '-' }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Telefone</dt>
-                        <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ Phone::format($tenant->phone) ?: ($tenant->phone ?: '-') }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">PIX</dt>
-                        <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $tenant->pix ?: '-' }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Status</dt>
-                        <dd class="mt-1">
-                            <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium {{ $tenant->status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' }}">
-                                {{ $statusLabels[$tenant->status] ?? $tenant->status }}
-                            </span>
-                        </dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Trial até</dt>
-                        <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $tenant->trial_ends_at?->format('d/m/Y H:i') ?: '-' }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Assinatura até</dt>
-                        <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $tenant->subscription_ends_at?->format('d/m/Y H:i') ?: '-' }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Criado em</dt>
-                        <dd class="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{{ $tenant->created_at?->format('d/m/Y H:i') ?: '-' }}</dd>
-                    </div>
-                </dl>
+        @if (session('success'))
+            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900/40 dark:bg-green-900/20 dark:text-green-300">
+                {{ session('success') }}
             </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
+                {{ $errors->first() }}
+            </div>
+        @endif
+
+        @if ($tenant)
+            @if ($canEditTenant)
+                @include('pages.profile._tenant-edit-form', ['tenant' => $tenant])
+            @endif
+
+            @include('pages.profile._tenant-details', ['tenant' => $tenant, 'canEditTenant' => $canEditTenant])
         @else
             <div class="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
                 <p class="text-sm text-gray-600 dark:text-gray-400">Nenhum tenant vinculado a esta conta.</p>
