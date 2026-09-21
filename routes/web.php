@@ -44,6 +44,7 @@ use App\Http\Controllers\ParentPortal\OrderController as ParentOrderController;
 use App\Http\Controllers\ParentPortal\SelfOrderController as ParentSelfOrderController;
 use App\Http\Controllers\ParentPortal\TabController as ParentTabController;
 use App\Http\Controllers\ParentPortal\WalletTopupController as ParentWalletTopupController;
+use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RequesterPortal\DashboardController as RequesterDashboardController;
 use App\Http\Controllers\RequesterPortal\OrderController as RequesterOrderController;
@@ -121,6 +122,9 @@ Route::middleware(['auth', 'tenant.context'])->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    Route::get('/password', [PasswordController::class, 'edit'])->name('password.edit');
+    Route::put('/password', [PasswordController::class, 'update'])->name('password.update');
 
     // form pages
     Route::get('/form-elements', function () {

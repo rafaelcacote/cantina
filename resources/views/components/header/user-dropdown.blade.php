@@ -64,6 +64,19 @@
                     Perfil
                 </a>
             </li>
+            <li>
+                <a
+                    href="{{ route('password.edit') }}"
+                    class="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                >
+                    <span class="text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+                        </svg>
+                    </span>
+                    Alterar senha
+                </a>
+            </li>
         </ul>
 
         <form method="POST" action="{{ route('logout') }}" class="mt-3">
